@@ -1,0 +1,23 @@
+import { Router } from "express";
+import {
+  getUsuarios,
+  createUsuarios,
+  updateUsuarios,
+  deleteUsuarios,
+  getUsuariosById,
+  login,
+} from "../controllers/authController.js";
+
+const router = Router();
+
+router.route("/usuarios").get(getUsuarios).post(createUsuarios);
+
+router
+  .route("/usuarios/:id")
+  .get(getUsuariosById)
+  .put(updateUsuarios)
+  .delete(deleteUsuarios);
+
+router.post("/login", login);
+
+export default router;
