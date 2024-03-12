@@ -65,3 +65,41 @@ Usuarios.beforeSave(async (user, options) => {
 Usuarios.prototype.checkPassword = async function (inputpassword) {
   return await bcrypt.compare(inputpassword, this.password);
 };
+
+export const UserPreregister = sequelize.define(
+  "preregistro",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    nombres: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+    },
+    apellidos: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+    },
+    matricula: {
+      type: DataTypes.STRING(15),
+      allowNull: false,
+    },
+    email_usuario: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+    },
+    carrera: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+    },
+    egresado: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+    },
+  },
+  {
+    timestamps: false,
+  }
+);

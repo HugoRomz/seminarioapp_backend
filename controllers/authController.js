@@ -1,4 +1,4 @@
-import { Usuarios } from "../models/Usuarios.js";
+import { Usuarios, UserPreregister } from "../models/Usuarios.js";
 import {
   handleNotFoundError,
   handleInternalServerError,
@@ -139,6 +139,42 @@ const login = async (req, res) => {
   }
 };
 
+const preregistro = async (req, res) => {
+  if (Object.values(req.body).includes("")) {
+    return handleNotFoundError("Algunos campos están vacíos", res);
+  }
+
+  try {
+    const { nombres, apellidos, matricula, email_usuario, carrera, egresado } =
+      req.body;
+
+    const UserExist = await UserPreregister.findOne({
+      where: { matricula },
+    });
+    if (UserExist) {
+      return handleNotFoundError(
+        "Ya esta pre registrado, te enviaremos un correo cuando seas aceptado.",
+        res
+      );
+    }
+
+    const preregistro = await UserPreregister.create({
+      nombres,
+      apellidos,
+      matricula,
+      email_usuario,
+      carrera,
+      egresado,
+    });
+
+    res.json({
+      msg: "El Usuario se creo correctamente",
+    });
+  } catch (error) {
+    return handleInternalServerError(error, res);
+  }
+};
+
 export {
   getUsuarios,
   getUsuariosById,
@@ -146,4 +182,5 @@ export {
   updateUsuarios,
   deleteUsuarios,
   login,
+  preregistro,
 };

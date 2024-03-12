@@ -4,8 +4,10 @@ import authroutes from "./routes/authRoutes.js";
 
 import express from "express";
 import colors from "colors";
+import cors from "cors";
 
-// import servicesRoutes from './routes/servicesRoutes.js'
+import dotenv from "dotenv";
+dotenv.config();
 
 // Configurando la app
 const app = express();
@@ -13,8 +15,23 @@ const app = express();
 //Leer datos via body
 app.use(express.json());
 
+//Configurar CORS
+
+const whitelist = [process.env.FRONTEND_URL, undefined];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (whitelist.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Error de cors"));
+    }
+  },
+};
+app.use(cors(corsOptions));
+
 // definir las rutas
-app.use("/v1-api/", authroutes);
+app.use("/v1-api/auth", authroutes);
 
 // Puerto
 const PORT = process.env.PORT || 4000;

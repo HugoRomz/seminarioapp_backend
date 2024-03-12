@@ -6,6 +6,7 @@ import {
   deleteUsuarios,
   getUsuariosById,
   login,
+  preregistro,
 } from "../controllers/authController.js";
 
 const router = Router();
@@ -19,5 +20,6 @@ router
   .delete(deleteUsuarios);
 
 router.post("/login", login);
+router.post("/preregistro", preregistro);
 
 export default router;
