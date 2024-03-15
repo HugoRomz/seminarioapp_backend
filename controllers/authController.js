@@ -2,6 +2,7 @@ import { Usuarios, UserPreregister } from "../models/Usuarios.js";
 import {
   handleNotFoundError,
   handleInternalServerError,
+  generateJWT,
 } from "../Utils/index.js";
 
 const getUsuarios = async (req, res) => {
@@ -131,8 +132,10 @@ const login = async (req, res) => {
   // Verificar contraseña
   const passwordCorrect = await user.checkPassword(password);
   if (passwordCorrect) {
+    const token = generateJWT(user.usuario_id);
+
     res.json({
-      msg: "Usuario Autenticado",
+      token,
     });
   } else {
     return handleNotFoundError("La contraseña es incorrecta", res);
