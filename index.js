@@ -17,14 +17,14 @@ app.use(express.json());
 
 //Configurar CORS
 
-const whitelist = [process.env.FRONTEND_URL, undefined];
+const whitelist = process.env.FRONTEND_URLS.split(','); // Asume que FRONTEND_URLS es una cadena de URLs separadas por comas
 
 const corsOptions = {
   origin: function (origin, callback) {
-    if (whitelist.includes(origin)) {
+    if (whitelist.indexOf(origin) !== -1 || !origin) {
       callback(null, true);
     } else {
-      callback(new Error("Error de cors"));
+      callback(new Error('Error de CORS'));
     }
   },
 };
