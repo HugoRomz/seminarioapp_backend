@@ -19,6 +19,9 @@ app.use(express.json());
 
 const whitelist = process.env.FRONTEND_URLS ? process.env.FRONTEND_URLS.split(',') : [];
 
+console.log("FRONTEND_URLS:", process.env.FRONTEND_URLS);
+console.log(whitelist);
+
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || whitelist.includes(origin)) {
