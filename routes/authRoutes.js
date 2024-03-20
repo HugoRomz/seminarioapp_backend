@@ -1,4 +1,5 @@
 import { Router } from "express";
+import authMiddleware from "../middleware/authMiddleware.js";
 import {
   getUsuarios,
   createUsuarios,
@@ -7,6 +8,7 @@ import {
   getUsuariosById,
   login,
   preregistro,
+  user
 } from "../controllers/authController.js";
 
 const router = Router();
@@ -21,5 +23,10 @@ router
 
 router.post("/login", login);
 router.post("/preregistro", preregistro);
+
+
+// Requiere JWT
+
+router.get('/user', authMiddleware, user)
 
 export default router;

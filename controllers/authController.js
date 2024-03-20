@@ -178,6 +178,13 @@ const preregistro = async (req, res) => {
   }
 };
 
+const user = async (req, res ) =>{
+  const {user} = req
+  res.json(
+    user
+  )
+}
+
 export {
   getUsuarios,
   getUsuariosById,
@@ -186,4 +193,5 @@ export {
   deleteUsuarios,
   login,
   preregistro,
+  user
 };
