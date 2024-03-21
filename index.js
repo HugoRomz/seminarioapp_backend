@@ -38,9 +38,8 @@ const PORT = process.env.PORT || 4000;
 
 async function main() {
   try {
-    await sequelize.sync();
-    // await sequelize.authenticate()
-    // console.log(colors.yellow('Conexión establecida correctamente con Sequelize.'));
+    await sequelize.authenticate()
+    console.log(colors.yellow('Conexión establecida correctamente con Sequelize.'));
     app.listen(PORT, () => {
       console.log(colors.cyan.bold("El servidor se esta ejecutando:"), PORT);
     });
