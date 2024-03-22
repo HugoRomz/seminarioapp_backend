@@ -18,6 +18,7 @@ const router = Router();
 // Rutas accesibles para todos los usuarios
 router.get("/usuarios", getUsuarios);
 router.get("/usuarios/:id", getUsuariosById);
+
 router.post("/login", login);
 router.post("/preregistro", preregistro);
 

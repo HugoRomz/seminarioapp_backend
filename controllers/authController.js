@@ -118,6 +118,8 @@ const deleteUsuarios = async (req, res) => {
     return handleInternalServerError(error, res);
   }
 };
+
+
 const login = async (req, res) => {
   const { email_usuario, password } = req.body;
 
@@ -141,6 +143,8 @@ const login = async (req, res) => {
     return handleNotFoundError("La contraseña es incorrecta", res);
   }
 };
+
+
 
 const preregistro = async (req, res) => {
   if (Object.values(req.body).includes("")) {
