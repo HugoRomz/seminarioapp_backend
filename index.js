@@ -15,26 +15,26 @@ const app = express();
 //Leer datos via body
 app.use(express.json());
 
-//Configurar CORS
-const whitelist = [process.env.FRONTEND_URL, undefined];
-console.log();
+// //Configurar CORS
+// const whitelist = [process.env.FRONTEND_URL, undefined];
+// console.log();
+
+// // const corsOptions = {
+// //   origin: function (origin, callback) {
+// //     if (whitelist.includes(origin)) {
+// //       callback(null, true);
+// //     } else {
+// //       callback(new Error("Error de cors"));
+// //     }
+// //   },
+// // };
 
 // const corsOptions = {
-//   origin: function (origin, callback) {
-//     if (whitelist.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error("Error de cors"));
-//     }
-//   },
+//   origin: true, // Aceptar todas las rutas
 // };
 
-const corsOptions = {
-  origin: true, // Aceptar todas las rutas
-};
-
-app.use(cors(corsOptions));
-
+// app.use(cors(corsOptions));
+app.use(cors())
 // definir las rutas
 app.use("/v1-api/auth", authroutes);
 
