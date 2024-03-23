@@ -82,7 +82,7 @@ const UniqueId = () =>
 
 const generateJWT = (id) => {
   const token = jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: "1m",
+    expiresIn: "30d",
   });
 
   return token;
