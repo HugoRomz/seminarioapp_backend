@@ -1,6 +1,7 @@
 import { sequelize } from "./config/db.js";
 
 import authroutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js"
 
 import express from "express";
 import colors from "colors";
@@ -32,6 +33,7 @@ app.use(cors(corsOptions));
 
 // definir las rutas
 app.use("/v1-api/auth", authroutes);
+app.use("/v1-api/user", userRoutes)
 
 // Puerto
 const PORT = process.env.PORT || 4000;
