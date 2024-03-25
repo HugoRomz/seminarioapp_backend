@@ -2,7 +2,7 @@ import { Usuarios, UserPreregister } from "../models/Usuarios.js";
 import {
   handleNotFoundError,
   handleInternalServerError,
-  generateJWT,
+  generateJWT,handleBadRequestError
 } from "../Utils/index.js";
 
 const login = async (req, res) => {
