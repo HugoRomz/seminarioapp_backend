@@ -17,7 +17,7 @@ function handleInternalServerError(error, res) {
 function handleBadRequestError(message, res) {
   const error = new Error(message);
   return res.status(400).json({
-    error: error.message,
+    msg: error.message,
   });
 }
 

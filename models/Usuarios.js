@@ -95,7 +95,7 @@ export const UserPreregister = sequelize.define(
       allowNull: false,
     },
     egresado: {
-      type: DataTypes.STRING(50),
+      type: DataTypes.BOOLEAN,
       allowNull: false,
     },
   },
