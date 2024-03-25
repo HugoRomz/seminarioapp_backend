@@ -40,7 +40,7 @@ const preregistro = async (req, res) => {
     let { nombres, apellidos, matricula, email_usuario, carrera, egresado } = req.body;
 
     // Convertir el valor de 'egresado' a booleano usando una operación ternaria
-    egresado = egresado === "Si soy Egresado" ? true : egresado === "No soy Egresado" ? false : false;
+    egresado = egresado === "Si soy egresado" ? true : egresado === "No soy egresado" ? false : false;
 
     const UserExist = await UserPreregister.findOne({
       where: { matricula },
