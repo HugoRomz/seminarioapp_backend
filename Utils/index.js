@@ -10,7 +10,7 @@ function handleNotFoundError(message, res) {
 function handleInternalServerError(error, res) {
   console.error("Error interno del servidor:", error);
   return res.status(500).json({
-    message: "Error interno del servidor",
+    msg: "Error interno del servidor",
   });
 }
 
@@ -24,56 +24,56 @@ function handleBadRequestError(message, res) {
 function handleUnauthorizedError(message, res) {
   const error = new Error(message);
   return res.status(401).json({
-    error: error.message,
+    msg: error.message,
   });
 }
 
 function handleForbiddenError(message, res) {
   const error = new Error(message);
   return res.status(403).json({
-    error: error.message,
+    msg: error.message,
   });
 }
 
 function handleMethodNotAllowedError(message, res) {
   const error = new Error(message);
   return res.status(405).json({
-    error: error.message,
+    msg: error.message,
   });
 }
 
 function handleUnprocessableEntityError(message, res) {
   const error = new Error(message);
   return res.status(422).json({
-    error: error.message,
+    msg: error.message,
   });
 }
 
 function handleNotImplementedError(message, res) {
   const error = new Error(message);
   return res.status(501).json({
-    error: error.message,
+    msg: error.message,
   });
 }
 
 function handleBadGatewayError(message, res) {
   const error = new Error(message);
   return res.status(502).json({
-    error: error.message,
+    msg: error.message,
   });
 }
 
 function handleServiceUnavailableError(message, res) {
   const error = new Error(message);
   return res.status(503).json({
-    error: error.message,
+    msg: error.message,
   });
 }
 
 function handleGatewayTimeoutError(message, res) {
   const error = new Error(message);
   return res.status(504).json({
-    error: error.message,
+    msg: error.message,
   });
 }
 
@@ -87,6 +87,58 @@ const generateJWT = (id) => {
 
   return token;
 };
+
+function separarApellidos(apellidoCompleto) {
+  // Lista de prefijos para apellidos compuestos
+  const prefijosApellidosCompuestos = ["De La ", "Del ", "De Las ", "De Los ", "De ", "La ", "Las ", "Los ", "San ", "Santa "];
+  let apellidoPaterno = '';
+  let apellidoMaterno = '';
+
+  // Encuentra el último prefijo que coincida en el apellido
+  let ultimoIndexPrefijo = -1;
+  let prefijoSeleccionado = '';
+  prefijosApellidosCompuestos.forEach(prefijo => {
+      let index = apellidoCompleto.indexOf(prefijo);
+      if (index > ultimoIndexPrefijo && index !== -1) {
+          ultimoIndexPrefijo = index;
+          prefijoSeleccionado = prefijo;
+      }
+  });
+
+  if (ultimoIndexPrefijo > 0) {
+      // Divide basado en el último prefijo encontrado si no está al inicio
+      apellidoPaterno = apellidoCompleto.substring(0, ultimoIndexPrefijo).trim();
+      apellidoMaterno = apellidoCompleto.substring(ultimoIndexPrefijo).trim();
+  } else if (ultimoIndexPrefijo === 0) {
+      // Maneja caso donde el apellido completo inicia con un prefijo
+      apellidoPaterno = ''; // Considera no tener apellido paterno en este caso específico o ajusta según necesites
+      apellidoMaterno = apellidoCompleto;
+  } else {
+      // Si no hay prefijos, divide por el primer espacio encontrado
+      const partes = apellidoCompleto.split(' ');
+      if (partes.length > 1) {
+          apellidoPaterno = partes[0];
+          apellidoMaterno = partes.slice(1).join(' ');
+      } else {
+          apellidoPaterno = apellidoCompleto; // Si solo hay una palabra, se considera como apellido paterno
+      }
+  }
+
+  return { apellidoPaterno, apellidoMaterno };
+}
+
+function generatePassword(matricula) {
+
+  const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+  let password = matricula; 
+
+  for (let i = 0; i < 6; i++) {
+    const indiceAleatorio = Math.floor(Math.random() * caracteres.length);
+    password += caracteres.charAt(indiceAleatorio);
+  }
+
+  return password;
+}
 
 export {
   handleNotFoundError,
@@ -102,4 +154,6 @@ export {
   handleGatewayTimeoutError,
   UniqueId,
   generateJWT,
+  separarApellidos,
+  generatePassword
 };

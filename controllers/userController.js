@@ -2,7 +2,8 @@ import { Usuarios, UserPreregister } from "../models/Usuarios.js";
 import {
   handleNotFoundError,
   handleInternalServerError,
-  generateJWT,
+  separarApellidos,
+  generatePassword
 } from "../Utils/index.js";
 
 const getUsuarios = async (req, res) => {
@@ -33,6 +34,50 @@ const getUsuariosById = async (req, res) => {
     }
 
     res.json(usuario);
+  } catch (error) {
+    return handleInternalServerError(error, res);
+  }
+};
+
+const aceptarUsuario = async (req, res) => {
+
+  if (Object.values(req.body).includes("")) {
+    return handleNotFoundError("Algunos campos están vacíos", res);
+  }
+
+  try {
+
+    const { apellidoPaterno, apellidoMaterno } = separarApellidos(req.body.apellidos);
+    const password = generatePassword(req.body.matricula);
+    const usuario_id = req.body.matricula.toUpperCase();
+
+    const usuarioNuevo = {
+      usuario_id: usuario_id,
+      nombre: req.body.nombres, 
+      apellido_p: apellidoPaterno,
+      apellido_m: apellidoMaterno,
+      telefono_usuario: null,
+      email_usuario: req.body.email_usuario,
+      password: password
+    };
+
+
+
+    const UserExist = await Usuarios.findOne({
+      where: { usuario_id },
+    });
+    if (UserExist) {
+      return handleNotFoundError(
+        "El usuario ya esta existe, verificalo porfavor",
+        res
+      );
+    }
+    
+  const newUsuario = await Usuarios.create(usuarioNuevo); 
+
+    res.json({
+      msg: "El Usuario se creo correctamente",
+    });
   } catch (error) {
     return handleInternalServerError(error, res);
   }
@@ -137,5 +182,6 @@ export {
   getUsuariosById,
   createUsuarios,
   updateUsuarios,
-  deleteUsuarios
+  deleteUsuarios,
+  aceptarUsuario
 };

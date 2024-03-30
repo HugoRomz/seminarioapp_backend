@@ -8,7 +8,8 @@ import {
   updateUsuarios,
   deleteUsuarios,
   getUsuariosById,
-  getPreregister
+  getPreregister,
+  aceptarUsuario
 } from "../controllers/userController.js";
 
 const router = Router();
@@ -18,6 +19,7 @@ router.get("/usuarios", getUsuarios);
 router.get("/usuarios/:id", getUsuariosById);
 
 router.get("/preregister", getPreregister);
+router.post("/preregister", aceptarUsuario);
 
 // Rutas que requieren autenticación y ser administrador
 router.post("/usuarios", authMiddleware, verificarRol(['Administrador']), createUsuarios);
