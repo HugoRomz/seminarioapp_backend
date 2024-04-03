@@ -1,4 +1,6 @@
 import { Usuarios, UserPreregister } from "../models/Usuarios.js";
+import { sendEmailVerification } from "../emails/authEmailService.js";
+import { sequelize } from "../config/db.js";
 import {
   handleNotFoundError,
   handleInternalServerError,
@@ -17,12 +19,17 @@ const getUsuarios = async (req, res) => {
 
 const getPreregister = async (req, res) => {
   try {
-    const usuarios = await UserPreregister.findAll();
+    const usuarios = await UserPreregister.findAll({
+      where: {
+        status: true
+      }
+    });
     res.json(usuarios);
   } catch (error) {
     return handleInternalServerError(error, res);
   }
 };
+
 
 const getUsuariosById = async (req, res) => {
   try {
@@ -40,13 +47,13 @@ const getUsuariosById = async (req, res) => {
 };
 
 const aceptarUsuario = async (req, res) => {
-
   if (Object.values(req.body).includes("")) {
     return handleNotFoundError("Algunos campos están vacíos", res);
   }
 
-  try {
+  const t = await sequelize.transaction();
 
+  try {
     const { apellidoPaterno, apellidoMaterno } = separarApellidos(req.body.apellidos);
     const password = generatePassword(req.body.matricula);
     const usuario_id = req.body.matricula.toUpperCase();
@@ -61,27 +68,51 @@ const aceptarUsuario = async (req, res) => {
       password: password
     };
 
-
-
     const UserExist = await Usuarios.findOne({
       where: { usuario_id },
-    });
+    }, { transaction: t });
+
     if (UserExist) {
+      await t.rollback();
       return handleNotFoundError(
-        "El usuario ya esta existe, verificalo porfavor",
+        "El usuario ya existe, por favor verifícalo",
         res
       );
     }
+
+    const newUsuario = await Usuarios.create(usuarioNuevo, { transaction: t }); 
+    const { email_usuario } = newUsuario;
+
+    await sendEmailVerification(email_usuario, password);
+
+    const preregisterExist =  await UserPreregister.update({ status: false }, {
+      where: { matricula: usuario_id },
+      transaction: t
+    });
+
+   
     
-  const newUsuario = await Usuarios.create(usuarioNuevo); 
+    if (!preregisterExist) {
+      await t.rollback();
+      return handleNotFoundError(
+        "Preregistro no encontrado con la matricula proporcionada",
+        res
+      );
+    }
+
+    
+    await t.commit();
 
     res.json({
-      msg: "El Usuario se creo correctamente",
+      msg: "El Usuario se creó correctamente",
     });
   } catch (error) {
+    await t.rollback();
+    console.error("Error al aceptar usuario:", error);
     return handleInternalServerError(error, res);
   }
 };
+
 
 const createUsuarios = async (req, res) => {
   if (Object.values(req.body).includes("")) {
