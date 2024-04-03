@@ -98,6 +98,10 @@ export const UserPreregister = sequelize.define(
       type: DataTypes.BOOLEAN,
       allowNull: false,
     },
+    status: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+    },
   },
   {
     timestamps: false,

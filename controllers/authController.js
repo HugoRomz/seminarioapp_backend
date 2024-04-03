@@ -42,6 +42,9 @@ const preregistro = async (req, res) => {
     // Convertir el valor de 'egresado' a booleano usando una operación ternaria
     egresado = egresado === "Si soy egresado" ? true : egresado === "No soy egresado" ? false : false;
 
+    // Convertir matricula a mayúsculas
+    matricula = matricula.toUpperCase();
+
     const UserExist = await UserPreregister.findOne({
       where: { matricula },
     });
@@ -55,10 +58,11 @@ const preregistro = async (req, res) => {
     const preregistro = await UserPreregister.create({
       nombres,
       apellidos,
-      matricula,
+      matricula, // Esta ya está convertida a mayúsculas
       email_usuario,
       carrera,
       egresado,
+      status: true
     });
 
     res.json({
@@ -68,6 +72,7 @@ const preregistro = async (req, res) => {
     return handleInternalServerError(error, res);
   }
 };
+
 
 
 const user = async (req, res ) =>{
