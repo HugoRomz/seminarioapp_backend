@@ -1,5 +1,7 @@
 import { Usuarios, UserPreregister } from "../models/Usuarios.js";
-import { sendEmailVerification } from "../emails/authEmailService.js";
+import { Usuarios_Roles } from "../models/Usuarios_Roles.js"
+import { Roles } from "../models/Roles.js"
+import { sendEmailRejection, sendEmailVerification } from "../emails/authEmailService.js";
 import { sequelize } from "../config/db.js";
 import {
   handleNotFoundError,
@@ -100,6 +102,20 @@ const aceptarUsuario = async (req, res) => {
       );
     }
 
+
+    const rolAlumno = await Roles.findOne({
+      where: { nombre_rol: 'Alumno' } 
+    }, { transaction: t });
+
+    if (!rolAlumno) {
+      await t.rollback();
+      throw new Error("Rol 'Alumno' no encontrado");
+    }
+
+    await Usuarios_Roles.create({
+      usuarioUsuarioId: newUsuario.usuario_id, 
+      roleRolId: rolAlumno.rol_id
+    }, { transaction: t });
     
     await t.commit();
 
@@ -112,6 +128,32 @@ const aceptarUsuario = async (req, res) => {
     return handleInternalServerError(error, res);
   }
 };
+
+const rechazarUsuario = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const UserEmail = await UserPreregister.findOne({
+      where: { id:id },
+    });
+
+    console.log(UserEmail);
+    sendEmailRejection(UserEmail.email_usuario)
+
+    await UserPreregister.destroy({
+      where: {
+        id: id,
+      },
+    });
+    
+    res.json({
+      msg: "El registro se elimino correctamente",
+    });
+  } catch (error) {
+    return handleInternalServerError(error, res);
+  }
+};
+
 
 
 const createUsuarios = async (req, res) => {
@@ -214,5 +256,6 @@ export {
   createUsuarios,
   updateUsuarios,
   deleteUsuarios,
-  aceptarUsuario
+  aceptarUsuario,
+  rechazarUsuario
 };
