@@ -246,6 +246,141 @@ const deleteUsuarios = async (req, res) => {
   }
 };
 
+const getAlumnos = async (req, res) => {
+  try {
+    // Busca usuarios con el rol de "Alumno", que sabemos tiene el ID 3
+    const usuarios = await Usuarios.findAll({
+      include: [{
+        model: Roles,
+        where: { rol_id: 3 }, // Utiliza el ID del rol directamente
+        through: { attributes: [] } // No incluir atributos de la tabla intermedia
+      }],
+      where: {
+        status: 'ACTIVO' // Asegurándonos de que el usuario está activo, si es necesario
+      }
+    });
+    
+    res.json(usuarios);
+  } catch (error) {
+    console.error('Error al obtener alumnos:', error);
+    res.status(500).send('Error interno del servidor');
+  }
+};
+
+const deleteAlumnos = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await Usuarios.destroy({
+      where: {
+        usuario_id: id,
+      },
+    });
+    res.json({
+      msg: "El Usuario se elimino correctamente",
+    });
+  } catch (error) {
+    return handleInternalServerError(error, res);
+  }
+};
+
+
+
+const insertarAlumnos = async (req, res) => {
+  if (Object.values(req.body).includes("")) {
+    return handleNotFoundError("Algunos campos están vacíos", res);
+  }
+
+  console.log(req.body);
+  const t = await sequelize.transaction();
+
+  try {
+    const usuario_id = req.body.usuario_id.toUpperCase();
+
+    const usuarioNuevo = {
+      usuario_id: usuario_id,
+      nombre: req.body.nombre, 
+      apellido_p: req.body.apellido_p,
+      apellido_m: req.body.apellido_m,
+      telefono_usuario: req.body.telefono_usuario,
+      email_usuario: req.body.email_usuario,
+      password: req.body.password
+    };
+
+    const UserExist = await Usuarios.findOne({
+      where: { usuario_id },
+    }, { transaction: t });
+
+    if (UserExist) {
+      await t.rollback();
+      return handleNotFoundError(
+        "El usuario ya existe, por favor verifícalo",
+        res
+      );
+    }
+
+    const newUsuario = await Usuarios.create(usuarioNuevo, { transaction: t }); 
+ 
+    const rolAlumno = await Roles.findOne({
+      where: { nombre_rol: 'Alumno' } 
+    }, { transaction: t });
+
+    if (!rolAlumno) {
+      await t.rollback();
+      throw new Error("Rol 'Alumno' no encontrado");
+    }
+
+    await Usuarios_Roles.create({
+      usuarioUsuarioId: newUsuario.usuario_id, 
+      roleRolId: rolAlumno.rol_id
+    }, { transaction: t });
+    
+    await t.commit();
+
+    res.json({
+      msg: "El Usuario se creó correctamente",
+    });
+  } catch (error) {
+    await t.rollback();
+    console.error("Error al aceptar usuario:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+const updateAlumnos = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      usuario_id,
+      nombre,
+      apellido_p,
+      apellido_m,
+      telefono_usuario,
+      email_usuario,
+      password
+    } = req.body;
+
+    const usuario = await Usuarios.findByPk(id);
+    if (!usuario) {
+      return handleNotFoundError("El Usuario no existe", res);
+    }
+    usuario.usuario_id = usuario_id;
+    usuario.nombre = nombre;
+    usuario.apellido_p = apellido_p;
+    usuario.apellido_m = apellido_m;
+    usuario.telefono_usuario = telefono_usuario;
+    usuario.email_usuario = email_usuario;
+    usuario.password = password
+
+    await usuario.save();
+
+    res.json({
+      msg: "El Usuario se editó correctamente",
+    });
+  } catch (error) {
+    return handleInternalServerError(error, res);
+  }
+};
 
 
 
@@ -257,5 +392,9 @@ export {
   updateUsuarios,
   deleteUsuarios,
   aceptarUsuario,
-  rechazarUsuario
+  rechazarUsuario,
+  getAlumnos,
+  deleteAlumnos,
+  insertarAlumnos,
+  updateAlumnos
 };

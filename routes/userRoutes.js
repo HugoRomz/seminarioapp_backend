@@ -10,7 +10,11 @@ import {
   getUsuariosById,
   getPreregister,
   aceptarUsuario,
-  rechazarUsuario
+  rechazarUsuario,
+  getAlumnos,
+  deleteAlumnos,
+  insertarAlumnos,
+  updateAlumnos
 } from "../controllers/userController.js";
 
 const router = Router();
@@ -19,13 +23,21 @@ const router = Router();
 router.get("/usuarios", getUsuarios);
 router.get("/usuarios/:id", getUsuariosById);
 
+// PREREGISTROS
 router.get("/preregister", getPreregister);
 router.post("/preregister",authMiddleware, verificarRol(['Administrador']), aceptarUsuario);
 router.delete("/preregister/:id",authMiddleware, verificarRol(['Administrador']), rechazarUsuario);
 
+// USUARIOS
 router.post("/usuarios", authMiddleware, verificarRol(['Administrador']), createUsuarios);
 router.put("/usuarios/:id", authMiddleware, verificarRol(['Administrador']), updateUsuarios);
 router.delete("/usuarios/:id", authMiddleware, verificarRol(['Administrador']), deleteUsuarios);
+
+// ALUMNOS
+router.get("/alumnos",authMiddleware, verificarRol(['Administrador']), getAlumnos);
+router.post("/alumnos",authMiddleware, verificarRol(['Administrador']), insertarAlumnos);
+router.put("/alumnos/:id", authMiddleware, verificarRol(['Administrador']), updateAlumnos);
+router.delete("/alumnos/:id", authMiddleware, verificarRol(['Administrador']), deleteAlumnos);
 
 
 export default router;
