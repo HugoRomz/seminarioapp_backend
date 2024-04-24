@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-import { Usuarios } from '../models/Usuarios.js'
+import { Usuarios,Alumno,Egresado,Docente } from '../models/Usuarios.js'
 import { Roles } from '../models/Roles.js'
 import { Usuarios_Roles } from '../models/Usuarios_Roles.js'
  
@@ -13,11 +13,25 @@ const authMiddleware = async (req, res, next) => {
             const user = await Usuarios.findOne({
               where: { usuario_id: decoded.id },
               attributes: { exclude: ['password'] },
-              include: [{
-                model: Roles,
-                through: { attributes: [] }
-              }]
-            });
+              include: [
+                  {
+                      model: Roles,
+                      through: { attributes: [] }
+                  },
+                  {
+                      model: Alumno,
+                      required: false
+                  },
+                  {
+                      model: Egresado,
+                      required: false
+                  },
+                  {
+                      model: Docente,
+                      required: false
+                  }
+              ]
+          });
       
             if (!user) {
               return res.status(403).json({ msg: 'No autorizado' });

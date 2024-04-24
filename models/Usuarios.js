@@ -7,7 +7,8 @@ export const Usuarios = sequelize.define(
   "usuarios",
   {
     usuario_id: {
-      type: DataTypes.STRING(15),
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
       allowNull: false,
     },
@@ -45,7 +46,7 @@ export const Usuarios = sequelize.define(
     },
   },
   {
-    timestamps: false,
+    timestamps: true,
   }
 );
 
@@ -61,10 +62,107 @@ Usuarios.beforeSave(async (user, options) => {
   }
 });
 
-// Agregar un método al modelo
 Usuarios.prototype.checkPassword = async function (inputpassword) {
   return await bcrypt.compare(inputpassword, this.password);
 };
+
+
+export const Alumno = sequelize.define(
+  "alumnos",
+  {
+    matricula: {
+      type: DataTypes.STRING(50),
+      primaryKey: true,
+      allowNull: false,
+    },
+    calificacionFinal: {
+      type: DataTypes.INTEGER,
+      defaultValue: 5,
+      validate: {
+        min: 5,
+        max: 8,
+      },
+    },
+    usuario_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      unique: true,
+    },
+  }
+);
+
+// Relación uno a uno entre Usuarios y Alumno
+Usuarios.hasOne(Alumno, { foreignKey: 'usuario_id' });
+Alumno.belongsTo(Usuarios, { foreignKey: 'usuario_id' });
+
+export const Docente = sequelize.define(
+  "docentes",
+  {
+    num_plaza: {
+      type: DataTypes.STRING(50),
+      primaryKey: true,
+      allowNull: false,
+    },
+    licenciatura: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+    },
+    maestria: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+    },
+    doctorado: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+    },
+    usuario_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      unique: true,
+    },
+  }
+);
+
+// Relación uno a uno entre Usuarios y Docente
+Usuarios.hasOne(Docente, { foreignKey: 'usuario_id' });
+Docente.belongsTo(Usuarios, { foreignKey: 'usuario_id' });
+
+export const Egresado = sequelize.define(
+  "egresados",
+  {
+    cod_egresado: {
+      type: DataTypes.STRING(50),
+      primaryKey: true,
+      allowNull: false,
+    },
+    trabajando: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+    },
+    especializado: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+    },
+    calificacionFinal: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 5,
+      validate: {
+        min: 5,
+        max: 8,
+      },
+    },
+    usuario_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      unique: true,
+    },
+  }
+);
+
+// Relación uno a uno entre Usuarios y Egresado
+Usuarios.hasOne(Egresado, { foreignKey: 'usuario_id' });
+Egresado.belongsTo(Usuarios, { foreignKey: 'usuario_id' });
 
 export const UserPreregister = sequelize.define(
   "preregistro",

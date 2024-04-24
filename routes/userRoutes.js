@@ -29,7 +29,7 @@ router.post("/preregister",authMiddleware, verificarRol(['Administrador']), acep
 router.delete("/preregister/:id",authMiddleware, verificarRol(['Administrador']), rechazarUsuario);
 
 // USUARIOS
-router.post("/usuarios", authMiddleware, verificarRol(['Administrador']), createUsuarios);
+router.post("/usuarios", createUsuarios);
 router.put("/usuarios/:id", authMiddleware, verificarRol(['Administrador']), updateUsuarios);
 router.delete("/usuarios/:id", authMiddleware, verificarRol(['Administrador']), deleteUsuarios);
 

@@ -1,4 +1,4 @@
-import { Usuarios, UserPreregister } from "../models/Usuarios.js";
+import { Usuarios,Alumno, UserPreregister } from "../models/Usuarios.js";
 import { Usuarios_Roles } from "../models/Usuarios_Roles.js"
 import { Roles } from "../models/Roles.js"
 import { sendEmailRejection, sendEmailVerification } from "../emails/authEmailService.js";
@@ -163,7 +163,6 @@ const createUsuarios = async (req, res) => {
 
   try {
     const {
-      usuario_id,
       nombre,
       apellido_p,
       apellido_m,
@@ -172,18 +171,9 @@ const createUsuarios = async (req, res) => {
       password,
     } = req.body;
 
-    const UserExist = await Usuarios.findOne({
-      where: { usuario_id },
-    });
-    if (UserExist) {
-      return handleNotFoundError(
-        "El usuario ya esta existe, verificalo porfavor",
-        res
-      );
-    }
+
 
     const newUsuario = await Usuarios.create({
-      usuario_id,
       nombre,
       apellido_p,
       apellido_m,
@@ -245,16 +235,20 @@ const deleteUsuarios = async (req, res) => {
     return handleInternalServerError(error, res);
   }
 };
-
 const getAlumnos = async (req, res) => {
   try {
     // Busca usuarios con el rol de "Alumno", que sabemos tiene el ID 3
     const usuarios = await Usuarios.findAll({
-      include: [{
-        model: Roles,
-        where: { rol_id: 3 }, // Utiliza el ID del rol directamente
-        through: { attributes: [] } // No incluir atributos de la tabla intermedia
-      }],
+      include: [
+        {
+          model: Roles,
+          where: { rol_id: 3 }, 
+          through: { attributes: [] } 
+        },
+        {
+          model: Alumno // Incluye los detalles específicos del alumno
+        }
+      ],
       where: {
         status: 'ACTIVO' // Asegurándonos de que el usuario está activo, si es necesario
       }
@@ -266,6 +260,7 @@ const getAlumnos = async (req, res) => {
     res.status(500).send('Error interno del servidor');
   }
 };
+
 
 const deleteAlumnos = async (req, res) => {
   try {
@@ -291,14 +286,13 @@ const insertarAlumnos = async (req, res) => {
     return handleNotFoundError("Algunos campos están vacíos", res);
   }
 
-  console.log(req.body);
   const t = await sequelize.transaction();
 
   try {
-    const usuario_id = req.body.usuario_id.toUpperCase();
+    const matricula = req.body.matricula.toUpperCase();
+    console.log(matricula);
 
     const usuarioNuevo = {
-      usuario_id: usuario_id,
       nombre: req.body.nombre, 
       apellido_p: req.body.apellido_p,
       apellido_m: req.body.apellido_m,
@@ -307,8 +301,8 @@ const insertarAlumnos = async (req, res) => {
       password: req.body.password
     };
 
-    const UserExist = await Usuarios.findOne({
-      where: { usuario_id },
+    const UserExist = await Alumno.findOne({
+      where: { matricula },
     }, { transaction: t });
 
     if (UserExist) {
@@ -319,7 +313,9 @@ const insertarAlumnos = async (req, res) => {
       );
     }
 
+
     const newUsuario = await Usuarios.create(usuarioNuevo, { transaction: t }); 
+    console.log(newUsuario);
  
     const rolAlumno = await Roles.findOne({
       where: { nombre_rol: 'Alumno' } 
@@ -336,10 +332,16 @@ const insertarAlumnos = async (req, res) => {
     }, { transaction: t });
     
     await t.commit();
-
+    
+    await Alumno.create({
+      matricula,
+      usuario_id : newUsuario.usuario_id,
+    });
+    
     res.json({
       msg: "El Usuario se creó correctamente",
     });
+
   } catch (error) {
     await t.rollback();
     console.error("Error al aceptar usuario:", error);
