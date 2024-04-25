@@ -264,20 +264,36 @@ const getAlumnos = async (req, res) => {
 
 const deleteAlumnos = async (req, res) => {
   try {
-    const { id } = req.params;
 
+    const usuario_id  = req.params;
+    // Eliminar usuario de la tabla Usuarios
     await Usuarios.destroy({
       where: {
-        usuario_id: id,
+        usuario_id: usuario_id.id,
       },
     });
+    // Eliminar alumno asociado en la tabla Alumno
+    await Alumno.destroy({
+      where: {
+        usuario_id: usuario_id.id,
+      },
+    });
+    // Eliminar las relaciones de roles asociadas al usuario
+    await Usuarios_Roles.destroy({
+      where: {
+        usuarioUsuarioId: usuario_id.id,
+      },
+    });
+
     res.json({
       msg: "El Usuario se elimino correctamente",
     });
+
   } catch (error) {
     return handleInternalServerError(error, res);
   }
 };
+
 
 
 
@@ -315,8 +331,7 @@ const insertarAlumnos = async (req, res) => {
 
 
     const newUsuario = await Usuarios.create(usuarioNuevo, { transaction: t }); 
-    console.log(newUsuario);
- 
+
     const rolAlumno = await Roles.findOne({
       where: { nombre_rol: 'Alumno' } 
     }, { transaction: t });
@@ -348,42 +363,50 @@ const insertarAlumnos = async (req, res) => {
     return handleInternalServerError(error, res);
   }
 };
-
 const updateAlumnos = async (req, res) => {
   try {
     const { id } = req.params;
     const {
       usuario_id,
+      matricula,
       nombre,
       apellido_p,
       apellido_m,
       telefono_usuario,
       email_usuario,
-      password
+      password,
     } = req.body;
 
-    const usuario = await Usuarios.findByPk(id);
-    if (!usuario) {
-      return handleNotFoundError("El Usuario no existe", res);
-    }
-    usuario.usuario_id = usuario_id;
-    usuario.nombre = nombre;
-    usuario.apellido_p = apellido_p;
-    usuario.apellido_m = apellido_m;
-    usuario.telefono_usuario = telefono_usuario;
-    usuario.email_usuario = email_usuario;
-    usuario.password = password
+    // Actualiza la información del usuario en la tabla Usuarios
+    await Usuarios.update(
+      {
+        usuario_id,
+        nombre,
+        apellido_p,
+        apellido_m,
+        telefono_usuario,
+        email_usuario,
+        password
+      },
+      { where: { usuario_id: id } }
+    );
 
-    await usuario.save();
+    // Actualiza la información del alumno en la tabla Alumno
+    await Alumno.update(
+      {
+        matricula
+      },
+      { where: { usuario_id: id } }
+    );
 
     res.json({
       msg: "El Usuario se editó correctamente",
     });
   } catch (error) {
-    return handleInternalServerError(error, res);
+    console.error("Error al actualizar el Usuario:", error);
+    return res.status(500).json({ error: "Ocurrió un error al actualizar el Usuario" });
   }
 };
-
 
 
 export {
