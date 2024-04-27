@@ -131,7 +131,7 @@ CREATE TABLE periodo (
     fecha_inicio DATE NOT NULL,
     fecha_fin DATE NOT NULL,
     status BOOLEAN NOT NULL,
-     PRIMARY KEY (periodo_id)
+    PRIMARY KEY (periodo_id)
 );
 
 CREATE TABLE curso_periodo(
