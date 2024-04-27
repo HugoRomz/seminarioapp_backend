@@ -1,13 +1,16 @@
-import { Usuarios,Alumno, UserPreregister } from "../models/Usuarios.js";
-import { Usuarios_Roles } from "../models/Usuarios_Roles.js"
-import { Roles } from "../models/Roles.js"
-import { sendEmailRejection, sendEmailVerification } from "../emails/authEmailService.js";
+import { Usuarios, Alumno, UserPreregister } from "../models/Usuarios.js";
+import { Usuarios_Roles } from "../models/Usuarios_Roles.js";
+import { Roles } from "../models/Roles.js";
+import {
+  sendEmailRejection,
+  sendEmailVerification,
+} from "../emails/authEmailService.js";
 import { sequelize } from "../config/db.js";
 import {
   handleNotFoundError,
   handleInternalServerError,
   separarApellidos,
-  generatePassword
+  generatePassword,
 } from "../Utils/index.js";
 
 const getUsuarios = async (req, res) => {
@@ -23,15 +26,14 @@ const getPreregister = async (req, res) => {
   try {
     const usuarios = await UserPreregister.findAll({
       where: {
-        status: true
-      }
+        status: true,
+      },
     });
     res.json(usuarios);
   } catch (error) {
     return handleInternalServerError(error, res);
   }
 };
-
 
 const getUsuariosById = async (req, res) => {
   try {
@@ -56,23 +58,28 @@ const aceptarUsuario = async (req, res) => {
   const t = await sequelize.transaction();
 
   try {
-    const { apellidoPaterno, apellidoMaterno } = separarApellidos(req.body.apellidos);
+    const { apellidoPaterno, apellidoMaterno } = separarApellidos(
+      req.body.apellidos
+    );
     const password = generatePassword(req.body.matricula);
     const usuario_id = req.body.matricula.toUpperCase();
 
     const usuarioNuevo = {
       usuario_id: usuario_id,
-      nombre: req.body.nombres, 
+      nombre: req.body.nombres,
       apellido_p: apellidoPaterno,
       apellido_m: apellidoMaterno,
       telefono_usuario: null,
       email_usuario: req.body.email_usuario,
-      password: password
+      password: password,
     };
 
-    const UserExist = await Usuarios.findOne({
-      where: { usuario_id },
-    }, { transaction: t });
+    const UserExist = await Usuarios.findOne(
+      {
+        where: { usuario_id },
+      },
+      { transaction: t }
+    );
 
     if (UserExist) {
       await t.rollback();
@@ -82,18 +89,19 @@ const aceptarUsuario = async (req, res) => {
       );
     }
 
-    const newUsuario = await Usuarios.create(usuarioNuevo, { transaction: t }); 
+    const newUsuario = await Usuarios.create(usuarioNuevo, { transaction: t });
     const { email_usuario } = newUsuario;
 
     await sendEmailVerification(email_usuario, password);
 
-    const preregisterExist =  await UserPreregister.update({ status: false }, {
-      where: { matricula: usuario_id },
-      transaction: t
-    });
+    const preregisterExist = await UserPreregister.update(
+      { status: false },
+      {
+        where: { matricula: usuario_id },
+        transaction: t,
+      }
+    );
 
-   
-    
     if (!preregisterExist) {
       await t.rollback();
       return handleNotFoundError(
@@ -102,21 +110,26 @@ const aceptarUsuario = async (req, res) => {
       );
     }
 
-
-    const rolAlumno = await Roles.findOne({
-      where: { nombre_rol: 'Alumno' } 
-    }, { transaction: t });
+    const rolAlumno = await Roles.findOne(
+      {
+        where: { nombre_rol: "Alumno" },
+      },
+      { transaction: t }
+    );
 
     if (!rolAlumno) {
       await t.rollback();
       throw new Error("Rol 'Alumno' no encontrado");
     }
 
-    await Usuarios_Roles.create({
-      usuarioUsuarioId: newUsuario.usuario_id, 
-      roleRolId: rolAlumno.rol_id
-    }, { transaction: t });
-    
+    await Usuarios_Roles.create(
+      {
+        usuarioUsuarioId: newUsuario.usuario_id,
+        roleRolId: rolAlumno.rol_id,
+      },
+      { transaction: t }
+    );
+
     await t.commit();
 
     res.json({
@@ -134,18 +147,18 @@ const rechazarUsuario = async (req, res) => {
     const { id } = req.params;
 
     const UserEmail = await UserPreregister.findOne({
-      where: { id:id },
+      where: { id: id },
     });
 
     console.log(UserEmail);
-    sendEmailRejection(UserEmail.email_usuario)
+    sendEmailRejection(UserEmail.email_usuario);
 
     await UserPreregister.destroy({
       where: {
         id: id,
       },
     });
-    
+
     res.json({
       msg: "El registro se elimino correctamente",
     });
@@ -153,8 +166,6 @@ const rechazarUsuario = async (req, res) => {
     return handleInternalServerError(error, res);
   }
 };
-
-
 
 const createUsuarios = async (req, res) => {
   if (Object.values(req.body).includes("")) {
@@ -170,8 +181,6 @@ const createUsuarios = async (req, res) => {
       email_usuario,
       password,
     } = req.body;
-
-
 
     const newUsuario = await Usuarios.create({
       nombre,
@@ -242,30 +251,28 @@ const getAlumnos = async (req, res) => {
       include: [
         {
           model: Roles,
-          where: { rol_id: 3 }, 
-          through: { attributes: [] } 
+          where: { nombre_rol: "Alumno" },
+          through: { attributes: [] },
         },
         {
-          model: Alumno // Incluye los detalles específicos del alumno
-        }
+          model: Alumno, // Incluye los detalles específicos del alumno
+        },
       ],
       where: {
-        status: 'ACTIVO' // Asegurándonos de que el usuario está activo, si es necesario
-      }
+        status: "ACTIVO", // Asegurándonos de que el usuario está activo, si es necesario
+      },
     });
-    
+
     res.json(usuarios);
   } catch (error) {
-    console.error('Error al obtener alumnos:', error);
-    res.status(500).send('Error interno del servidor');
+    console.error("Error al obtener alumnos:", error);
+    res.status(500).send("Error interno del servidor");
   }
 };
 
-
 const deleteAlumnos = async (req, res) => {
   try {
-
-    const usuario_id  = req.params;
+    const usuario_id = req.params;
     // Eliminar usuario de la tabla Usuarios
     await Usuarios.destroy({
       where: {
@@ -288,14 +295,10 @@ const deleteAlumnos = async (req, res) => {
     res.json({
       msg: "El Usuario se elimino correctamente",
     });
-
   } catch (error) {
     return handleInternalServerError(error, res);
   }
 };
-
-
-
 
 const insertarAlumnos = async (req, res) => {
   if (Object.values(req.body).includes("")) {
@@ -309,17 +312,20 @@ const insertarAlumnos = async (req, res) => {
     console.log(matricula);
 
     const usuarioNuevo = {
-      nombre: req.body.nombre, 
+      nombre: req.body.nombre,
       apellido_p: req.body.apellido_p,
       apellido_m: req.body.apellido_m,
       telefono_usuario: req.body.telefono_usuario,
       email_usuario: req.body.email_usuario,
-      password: req.body.password
+      password: req.body.password,
     };
 
-    const UserExist = await Alumno.findOne({
-      where: { matricula },
-    }, { transaction: t });
+    const UserExist = await Alumno.findOne(
+      {
+        where: { matricula },
+      },
+      { transaction: t }
+    );
 
     if (UserExist) {
       await t.rollback();
@@ -329,34 +335,38 @@ const insertarAlumnos = async (req, res) => {
       );
     }
 
+    const newUsuario = await Usuarios.create(usuarioNuevo, { transaction: t });
 
-    const newUsuario = await Usuarios.create(usuarioNuevo, { transaction: t }); 
-
-    const rolAlumno = await Roles.findOne({
-      where: { nombre_rol: 'Alumno' } 
-    }, { transaction: t });
+    const rolAlumno = await Roles.findOne(
+      {
+        where: { nombre_rol: "Alumno" },
+      },
+      { transaction: t }
+    );
 
     if (!rolAlumno) {
       await t.rollback();
       throw new Error("Rol 'Alumno' no encontrado");
     }
 
-    await Usuarios_Roles.create({
-      usuarioUsuarioId: newUsuario.usuario_id, 
-      roleRolId: rolAlumno.rol_id
-    }, { transaction: t });
-    
+    await Usuarios_Roles.create(
+      {
+        usuarioUsuarioId: newUsuario.usuario_id,
+        roleRolId: rolAlumno.rol_id,
+      },
+      { transaction: t }
+    );
+
     await t.commit();
-    
+
     await Alumno.create({
       matricula,
-      usuario_id : newUsuario.usuario_id,
+      usuario_id: newUsuario.usuario_id,
     });
-    
+
     res.json({
       msg: "El Usuario se creó correctamente",
     });
-
   } catch (error) {
     await t.rollback();
     console.error("Error al aceptar usuario:", error);
@@ -386,15 +396,15 @@ const updateAlumnos = async (req, res) => {
         apellido_m,
         telefono_usuario,
         email_usuario,
-        password
+        password,
       },
-      { where: { usuario_id: id } }
+      { where: { usuario_id: id }, individualHooks: true }
     );
 
     // Actualiza la información del alumno en la tabla Alumno
     await Alumno.update(
       {
-        matricula
+        matricula,
       },
       { where: { usuario_id: id } }
     );
@@ -404,10 +414,11 @@ const updateAlumnos = async (req, res) => {
     });
   } catch (error) {
     console.error("Error al actualizar el Usuario:", error);
-    return res.status(500).json({ error: "Ocurrió un error al actualizar el Usuario" });
+    return res
+      .status(500)
+      .json({ error: "Ocurrió un error al actualizar el Usuario" });
   }
 };
-
 
 export {
   getUsuarios,
@@ -421,5 +432,5 @@ export {
   getAlumnos,
   deleteAlumnos,
   insertarAlumnos,
-  updateAlumnos
+  updateAlumnos,
 };
