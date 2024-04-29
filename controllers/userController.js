@@ -1,4 +1,10 @@
-import { Usuarios, Alumno, UserPreregister } from "../models/Usuarios.js";
+import {
+  Usuarios,
+  Alumno,
+  UserPreregister,
+  Docente,
+  Egresado,
+} from "../models/Usuarios.js";
 import { Usuarios_Roles } from "../models/Usuarios_Roles.js";
 import { Roles } from "../models/Roles.js";
 import {
@@ -244,6 +250,7 @@ const deleteUsuarios = async (req, res) => {
     return handleInternalServerError(error, res);
   }
 };
+
 const getAlumnos = async (req, res) => {
   try {
     // Busca usuarios con el rol de "Alumno", que sabemos tiene el ID 3
@@ -255,12 +262,17 @@ const getAlumnos = async (req, res) => {
           through: { attributes: [] },
         },
         {
-          model: Alumno, // Incluye los detalles específicos del alumno
+          model: Alumno,
+          required: false,
+        },
+        {
+          model: Egresado,
+          required: false,
         },
       ],
-      where: {
-        status: "ACTIVO", // Asegurándonos de que el usuario está activo, si es necesario
-      },
+      // where: {
+      //   status: "ACTIVO", // Asegurándonos de que el usuario está activo, si es necesario
+      // },
     });
 
     res.json(usuarios);
@@ -272,25 +284,26 @@ const getAlumnos = async (req, res) => {
 
 const deleteAlumnos = async (req, res) => {
   try {
-    const usuario_id = req.params;
+    const { id } = req.params;
     // Eliminar usuario de la tabla Usuarios
-    await Usuarios.destroy({
-      where: {
-        usuario_id: usuario_id.id,
+    await Usuarios.update(
+      {
+        status: "DESACTIVADO",
       },
-    });
-    // Eliminar alumno asociado en la tabla Alumno
-    await Alumno.destroy({
-      where: {
-        usuario_id: usuario_id.id,
-      },
-    });
-    // Eliminar las relaciones de roles asociadas al usuario
-    await Usuarios_Roles.destroy({
-      where: {
-        usuarioUsuarioId: usuario_id.id,
-      },
-    });
+      { where: { usuario_id: id } }
+    );
+    // // Eliminar alumno asociado en la tabla Alumno
+    // await Alumno.destroy({
+    //   where: {
+    //     usuario_id: usuario_id.id,
+    //   },
+    // });
+    // // Eliminar las relaciones de roles asociadas al usuario
+    // await Usuarios_Roles.destroy({
+    //   where: {
+    //     usuarioUsuarioId: usuario_id.id,
+    //   },
+    // });
 
     res.json({
       msg: "El Usuario se elimino correctamente",
@@ -309,7 +322,6 @@ const insertarAlumnos = async (req, res) => {
 
   try {
     const matricula = req.body.matricula.toUpperCase();
-    console.log(matricula);
 
     const usuarioNuevo = {
       nombre: req.body.nombre,
@@ -320,12 +332,22 @@ const insertarAlumnos = async (req, res) => {
       password: req.body.password,
     };
 
-    const UserExist = await Alumno.findOne(
-      {
-        where: { matricula },
-      },
-      { transaction: t }
-    );
+    let UserExist;
+    if (req.body.esEgresado) {
+      UserExist = await Egresado.findOne(
+        {
+          where: { cod_egresado: matricula },
+        },
+        { transaction: t }
+      );
+    } else {
+      UserExist = await Alumno.findOne(
+        {
+          where: { matricula },
+        },
+        { transaction: t }
+      );
+    }
 
     if (UserExist) {
       await t.rollback();
@@ -357,10 +379,213 @@ const insertarAlumnos = async (req, res) => {
       { transaction: t }
     );
 
+    if (req.body.esEgresado) {
+      await Egresado.create(
+        {
+          cod_egresado: matricula,
+          usuario_id: newUsuario.usuario_id,
+        },
+        { transaction: t }
+      );
+    } else {
+      await Alumno.create(
+        {
+          matricula,
+          usuario_id: newUsuario.usuario_id,
+        },
+        { transaction: t }
+      );
+    }
+
     await t.commit();
 
-    await Alumno.create({
-      matricula,
+    res.json({
+      msg: "El Usuario se creó correctamente",
+    });
+  } catch (error) {
+    await t.rollback();
+    console.error("Error al crear usuario:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+const updateAlumnos = async (req, res) => {
+  const { id } = req.params;
+  const {
+    usuario_id,
+    matricula,
+    nombre,
+    apellido_p,
+    apellido_m,
+    telefono_usuario,
+    email_usuario,
+    password,
+    esEgresado,
+  } = req.body;
+
+  const t = await sequelize.transaction();
+
+  try {
+    // Actualiza la información del usuario en la tabla Usuarios
+    await Usuarios.update(
+      {
+        nombre,
+        apellido_p,
+        apellido_m,
+        telefono_usuario,
+        email_usuario,
+        password,
+      },
+      { where: { usuario_id: id }, transaction: t }
+    );
+
+    // Determina en qué tabla hacer la actualización según el tipo de usuario
+    if (req.body.esEgresado) {
+      // Es un egresado, entonces actualiza en la tabla Egresado
+      await Egresado.update(
+        {
+          cod_egresado: matricula,
+        },
+        { where: { usuario_id: id }, transaction: t }
+      );
+    } else {
+      // No es egresado, entonces actualiza en la tabla Alumno
+      await Alumno.update(
+        {
+          matricula,
+        },
+        { where: { usuario_id: id }, transaction: t }
+      );
+    }
+
+    await t.commit();
+
+    res.json({
+      msg: "El Usuario se editó correctamente",
+    });
+  } catch (error) {
+    await t.rollback();
+    console.error("Error al actualizar el Usuario:", error);
+    return res.status(500).json({
+      error: "Ocurrió un error al actualizar el Usuario",
+    });
+  }
+};
+
+const getDocentes = async (req, res) => {
+  try {
+    // Busca usuarios con el rol de "Docente", que sabemos tiene el ID 3
+    const usuarios = await Usuarios.findAll({
+      include: [
+        {
+          model: Roles,
+          where: { nombre_rol: "Docente" },
+          through: { attributes: [] },
+        },
+        {
+          model: Docente,
+        },
+      ],
+    });
+
+    res.json(usuarios);
+  } catch (error) {
+    console.error("Error al obtener alumnos:", error);
+    res.status(500).send("Error interno del servidor");
+  }
+};
+
+const deleteDocentes = async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Eliminar usuario de la tabla Usuarios
+    await Usuarios.update(
+      {
+        status: "DESACTIVADO",
+      },
+      { where: { usuario_id: id } }
+    );
+    // // Eliminar alumno asociado en la tabla Alumno
+    // await Docente.destroy({
+    //   where: {
+    //     usuario_id: usuario_id.id,
+    //   },
+    // });
+    // // Eliminar las relaciones de roles asociadas al usuario
+    // await Usuarios_Roles.destroy({
+    //   where: {
+    //     usuarioUsuarioId: usuario_id.id,
+    //   },
+    // });
+
+    res.json({
+      msg: "El Usuario se elimino correctamente",
+    });
+  } catch (error) {
+    return handleInternalServerError(error, res);
+  }
+};
+
+const insertarDocentes = async (req, res) => {
+  if (Object.values(req.body).includes("")) {
+    return handleNotFoundError("Algunos campos están vacíos", res);
+  }
+
+  const t = await sequelize.transaction();
+
+  try {
+    const num_plaza = req.body.num_plaza.toUpperCase();
+    console.log(num_plaza);
+
+    const usuarioNuevo = {
+      nombre: req.body.nombre,
+      apellido_p: req.body.apellido_p,
+      apellido_m: req.body.apellido_m,
+      telefono_usuario: req.body.telefono_usuario,
+      email_usuario: req.body.email_usuario,
+      password: req.body.password,
+    };
+
+    const UserExist = await Docente.findOne(
+      {
+        where: { num_plaza },
+      },
+      { transaction: t }
+    );
+
+    if (UserExist) {
+      await t.rollback();
+      return handleNotFoundError(
+        "El usuario ya existe, por favor verifícalo",
+        res
+      );
+    }
+
+    const newUsuario = await Usuarios.create(usuarioNuevo, { transaction: t });
+
+    const rolDocente = await Roles.findOne(
+      {
+        where: { nombre_rol: "Docente" },
+      },
+      { transaction: t }
+    );
+
+    if (!rolDocente) {
+      await t.rollback();
+      throw new Error("Rol 'Alumno' no encontrado");
+    }
+
+    await Usuarios_Roles.create(
+      {
+        usuarioUsuarioId: newUsuario.usuario_id,
+        roleRolId: rolDocente.rol_id,
+      },
+      { transaction: t }
+    );
+
+    await t.commit();
+
+    await Docente.create({
+      num_plaza,
       usuario_id: newUsuario.usuario_id,
     });
 
@@ -373,12 +598,12 @@ const insertarAlumnos = async (req, res) => {
     return handleInternalServerError(error, res);
   }
 };
-const updateAlumnos = async (req, res) => {
+const updateDocentes = async (req, res) => {
   try {
     const { id } = req.params;
     const {
       usuario_id,
-      matricula,
+      num_plaza,
       nombre,
       apellido_p,
       apellido_m,
@@ -402,9 +627,9 @@ const updateAlumnos = async (req, res) => {
     );
 
     // Actualiza la información del alumno en la tabla Alumno
-    await Alumno.update(
+    await Docente.update(
       {
-        matricula,
+        num_plaza,
       },
       { where: { usuario_id: id } }
     );
@@ -433,4 +658,8 @@ export {
   deleteAlumnos,
   insertarAlumnos,
   updateAlumnos,
+  getDocentes,
+  deleteDocentes,
+  insertarDocentes,
+  updateDocentes,
 };
