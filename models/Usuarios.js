@@ -105,15 +105,15 @@ export const Docente = sequelize.define("docentes", {
   },
   licenciatura: {
     type: DataTypes.STRING(50),
-    allowNull: false,
+    allowNull: true,
   },
   maestria: {
     type: DataTypes.STRING(50),
-    allowNull: false,
+    allowNull: true,
   },
   doctorado: {
     type: DataTypes.STRING(50),
-    allowNull: false,
+    allowNull: true,
   },
   usuario_id: {
     type: DataTypes.UUID,
@@ -134,15 +134,14 @@ export const Egresado = sequelize.define("egresados", {
   },
   trabajando: {
     type: DataTypes.BOOLEAN,
-    allowNull: false,
+    allowNull: true,
   },
   especializado: {
     type: DataTypes.BOOLEAN,
-    allowNull: false,
+    allowNull: true,
   },
   calificacionFinal: {
     type: DataTypes.INTEGER,
-    allowNull: false,
     defaultValue: 5,
     validate: {
       min: 5,
