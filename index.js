@@ -1,7 +1,8 @@
 import { sequelize } from "./config/db.js";
 
 import authroutes from "./routes/authRoutes.js";
-import userRoutes from "./routes/userRoutes.js"
+import userRoutes from "./routes/userRoutes.js";
+import seminarioRoutes from "./routes/seminarioRoutes.js";
 
 import express from "express";
 import colors from "colors";
@@ -17,7 +18,7 @@ const app = express();
 app.use(express.json());
 
 // //Configurar CORS
-const whitelist =[process.env.FRONTEND_URL, undefined];
+const whitelist = [process.env.FRONTEND_URL, undefined];
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -33,15 +34,18 @@ app.use(cors(corsOptions));
 
 // definir las rutas
 app.use("/v1-api/auth", authroutes);
-app.use("/v1-api/user", userRoutes)
+app.use("/v1-api/user", userRoutes);
+app.use("/v1-api/seminario", seminarioRoutes);
 
 // Puerto
 const PORT = process.env.PORT || 4000;
 
 async function main() {
   try {
-    await sequelize.authenticate()
-    console.log(colors.yellow('Conexión establecida correctamente con Sequelize.'));
+    await sequelize.authenticate();
+    console.log(
+      colors.yellow("Conexión establecida correctamente con Sequelize.")
+    );
     app.listen(PORT, () => {
       console.log(colors.cyan.bold("El servidor se esta ejecutando:"), PORT);
     });
