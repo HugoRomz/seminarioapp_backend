@@ -11,6 +11,9 @@ import {
   insertarCarreras,
   updateCarreras,
   deleteCarreras,
+  getCursos,
+  insertarCursos,
+  updateCursos,
 } from "../controllers/catalogoController.js";
 
 const router = Router();
@@ -64,6 +67,26 @@ router.delete(
   authMiddleware,
   verificarRol(["Administrador"]),
   deleteCarreras
+);
+
+router.get(
+  "/cursos",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getCursos
+);
+
+router.post(
+  "/cursos",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  insertarCursos
+);
+router.put(
+  "/cursos/:id",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  updateCursos
 );
 
 export default router;
