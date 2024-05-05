@@ -19,14 +19,20 @@ const app = express();
 app.use(express.json());
 
 // //Configurar CORS
-const whitelist = process.env.FRONTEND_URL;
+const whitelist = [process.env.FRONTEND_URL];
+
+if (process.argv[2] === "--postman") {
+  whitelist.push(undefined);
+}
 
 const corsOptions = {
   origin: function (origin, callback) {
     if (whitelist.includes(origin)) {
+      // Permite la conexión
       callback(null, true);
     } else {
-      callback(new Error("Error de cors"));
+      // No permitir la conexión
+      callback(new Error("Error de CORS"));
     }
   },
 };

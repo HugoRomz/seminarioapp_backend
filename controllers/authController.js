@@ -1,9 +1,14 @@
 import { Usuarios, UserPreregister } from "../models/Usuarios.js";
+import { Carreras } from "../models/Carreras.js";
+import { CursoPeriodos, Periodos } from "../models/Periodo.js";
+
 import {
   handleNotFoundError,
   handleInternalServerError,
-  generateJWT,handleBadRequestError
+  generateJWT,
+  handleBadRequestError,
 } from "../Utils/index.js";
+import { Cursos } from "../models/Cursos.js";
 
 const login = async (req, res) => {
   const { email_usuario, password } = req.body;
@@ -29,61 +34,48 @@ const login = async (req, res) => {
   }
 };
 
-
-
 const preregistro = async (req, res) => {
   if (Object.values(req.body).includes("")) {
     return handleNotFoundError("Algunos campos están vacíos", res);
   }
+  console.log(req.body);
 
+  // } catch (error) {
+  //   return handleInternalServerError(error, res);
+  // }
+};
+
+const getCarreras = async (req, res) => {
   try {
-    let { nombres, apellidos, matricula, email_usuario, carrera, egresado } = req.body;
-
-    // Convertir el valor de 'egresado' a booleano usando una operación ternaria
-    egresado = egresado === "Si soy egresado" ? true : egresado === "No soy egresado" ? false : false;
-
-    // Convertir matricula a mayúsculas
-    matricula = matricula.toUpperCase();
-
-    const UserExist = await UserPreregister.findOne({
-      where: { matricula },
-    });
-    if (UserExist) {
-      return handleBadRequestError(
-        "Ya estas pre registrado, te enviaremos un correo cuando seas aceptado.",
-        res
-      );
-    }
-
-    const preregistro = await UserPreregister.create({
-      nombres,
-      apellidos,
-      matricula, // Esta ya está convertida a mayúsculas
-      email_usuario,
-      carrera,
-      egresado,
-      status: true
-    });
-
-    res.json({
-      msg: "El Usuario se creo correctamente",
-    });
+    const carreras = await Carreras.findAll();
+    res.json(carreras);
   } catch (error) {
     return handleInternalServerError(error, res);
   }
 };
 
-
-
-const user = async (req, res ) =>{
-  const {user} = req
-  res.json(
-    user
-  )
-}
-
-export {
-  login,
-  preregistro,
-  user
+const getCursosPeriodos = async (req, res) => {
+  try {
+    const cursos = await CursoPeriodos.findAll({
+      include: [
+        {
+          model: Cursos,
+        },
+        {
+          model: Periodos,
+          where: { status: true },
+        },
+      ],
+    });
+    res.json(cursos);
+  } catch (error) {
+    return handleInternalServerError(error, res);
+  }
 };
+
+const user = async (req, res) => {
+  const { user } = req;
+  res.json(user);
+};
+
+export { login, preregistro, user, getCarreras, getCursosPeriodos };

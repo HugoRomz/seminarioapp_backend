@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node --watch index.js",
     "server": "nodemon index.js",
+    "dev:postman": "node --watch index.js --postman",
     "seed:import": "node data/seed.js --import",
     "seed:destroy": "node data/seed.js --destroy",
     "sync": "node dbSync.js"
