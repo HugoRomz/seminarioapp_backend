@@ -5,16 +5,22 @@ import verificarRol from "../middleware/verificarRol.js";
 import {
   login,
   preregistro,
-  user
+  user,
+  getCarreras,
+  getCursosPeriodos,
 } from "../controllers/authController.js";
 
 const router = Router();
 
-
+// Rutas sin proteccion
 router.post("/login", login);
 router.post("/preregistro", preregistro);
 
+// Rutas para Preregistro
+router.get("/carreras", getCarreras);
+router.get("/cursosPeriodos", getCursosPeriodos);
+
 // Ruta protegida para obtener información del usuario autenticado
-router.get('/user', authMiddleware, user);
+router.get("/user", authMiddleware, user);
 
 export default router;
