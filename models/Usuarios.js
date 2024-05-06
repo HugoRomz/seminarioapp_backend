@@ -2,6 +2,7 @@ import { DataTypes } from "sequelize";
 import { sequelize } from "../config/db.js";
 import { UniqueId } from "../Utils/index.js";
 import bcrypt from "bcrypt";
+import { CursoPeriodos } from "./Periodo.js";
 
 export const Usuarios = sequelize.define(
   "usuarios",
@@ -175,7 +176,7 @@ export const UserPreregister = sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: false,
     },
-    matricula: {
+    id_estudiante: {
       type: DataTypes.STRING(15),
       allowNull: false,
     },
@@ -183,20 +184,56 @@ export const UserPreregister = sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: false,
     },
+    telefono: {
+      type: DataTypes.STRING(15),
+      allowNull: false,
+      defaultValue: "SIN DEFINIR",
+    },
     carrera: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     egresado: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
     },
-    status: {
+    trabajando: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+      defaultValue: false,
+    },
+    curso_periodo_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: CursoPeriodos,
+        key: "curso_periodo_id",
+      },
+    },
+    checkSeminario: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
+    },
+    anio_egreso: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+    },
+    lugar_trabajo: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      defaultValue: null,
+    },
+    status: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+      defaultValue: true,
     },
   },
   {
     timestamps: false,
   }
 );
+
+// Definir la relación con cursos_periodos
+UserPreregister.belongsTo(CursoPeriodos, { foreignKey: "curso_periodo_id" });
