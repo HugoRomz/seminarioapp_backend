@@ -38,11 +38,67 @@ const preregistro = async (req, res) => {
   if (Object.values(req.body).includes("")) {
     return handleNotFoundError("Algunos campos están vacíos", res);
   }
-  console.log(req.body);
+  let datosPreregistro = {};
 
-  // } catch (error) {
-  //   return handleInternalServerError(error, res);
-  // }
+  try {
+    if (req.body.es_egresado == "Sí") {
+      datosPreregistro = {
+        id_estudiante: req.body.codigo_alumno || "",
+        nombres: req.body.nombres || "",
+        apellidos: req.body.apellidos || "",
+        telefono: req.body.telefono || "",
+        email_usuario: req.body.email_usuario || "",
+        carrera: req.body.carrera || "",
+        egresado: req.body.es_egresado === "Sí" ? true : false,
+
+        anio_egreso: req.body.anio_egreso || "",
+
+        trabajando: req.body.trabaja_actualmente === "Sí" ? true : false,
+        lugar_trabajo: req.body.lugar_trabajo || "",
+
+        curso_periodo_id: req.body.seminario || "",
+
+        checkSeminario: req.body.ingresar_otro_seminario || false,
+      };
+    } else {
+      datosPreregistro = {
+        id_estudiante: req.body.matricula || "",
+
+        nombres: req.body.nombres || "",
+        apellidos: req.body.apellidos || "",
+        telefono: req.body.telefono || "",
+        email_usuario: req.body.email_usuario || "",
+        carrera: req.body.carrera || "",
+
+        egresado: req.body.es_egresado === "Sí" ? true : false,
+
+        trabajando: req.body.trabaja_actualmente === "Sí" ? true : false,
+
+        lugar_trabajo: req.body.lugar_trabajo || "",
+
+        curso_periodo_id: req.body.seminario || "",
+        checkSeminario: req.body.ingresar_otro_seminario || false,
+      };
+    }
+    const UserExist = await UserPreregister.findOne({
+      where: { id_estudiante: datosPreregistro.id_estudiante },
+    });
+
+    if (UserExist) {
+      return handleBadRequestError(
+        "La matricula o codigo de estudiante ya esta pre-registrado",
+        res
+      );
+    }
+
+    const user = await UserPreregister.create(datosPreregistro);
+
+    res.json({
+      msg: "El preregistro se creó correctamente, espera un correo del administrador",
+    });
+  } catch (error) {
+    return handleInternalServerError(error, res);
+  }
 };
 
 const getCarreras = async (req, res) => {
