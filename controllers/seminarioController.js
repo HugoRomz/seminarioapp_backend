@@ -18,14 +18,9 @@ const getSeminarioActivo = async (req, res) => {
       include: [
         {
           model: Cursos,
-          include: [
-            {
-              model: DetalleCurso,
-              include: [Materias],
-            },
-            Carreras,
-          ],
+          include: [Carreras],
         },
+        Periodos,
       ],
     });
 
