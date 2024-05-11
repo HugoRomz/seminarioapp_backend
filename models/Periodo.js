@@ -61,6 +61,10 @@ export const CursoPeriodos = sequelize.define(
       allowNull: true,
       defaultValue: "Pendiente",
     },
+    descripcion: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
   },
   {
     timestamps: false,
