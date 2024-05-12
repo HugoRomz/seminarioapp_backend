@@ -5,6 +5,7 @@ import verificarRol from "../middleware/verificarRol.js";
 import {
   getSeminarioActivo,
   rechazarCurso,
+  createPeriodo,
 } from "../controllers/seminarioController.js";
 
 const router = Router();
@@ -23,5 +24,7 @@ router.put(
   verificarRol,
   rechazarCurso
 );
+
+router.post("/periodo", authMiddleware, verificarRol, createPeriodo);
 
 export default router;
