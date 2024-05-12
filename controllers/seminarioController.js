@@ -78,4 +78,54 @@ const rechazarCurso = async (req, res) => {
   }
 };
 
-export { getSeminarioActivo, rechazarCurso };
+const createPeriodo = async (req, res) => {
+  try {
+    const { fechaInicio, fechaCierre } = req.body;
+
+    if (!fechaInicio || !fechaCierre) {
+      return handleBadRequestError("Faltan datos para crear el periodo", res);
+    }
+
+    const obtenerMesAño = (fecha) => {
+      const fechaObj = new Date(fecha);
+      const meses = [
+        "ENERO",
+        "FEBRERO",
+        "MARZO",
+        "ABRIL",
+        "MAYO",
+        "JUNIO",
+        "JULIO",
+        "AGOSTO",
+        "SEPTIEMBRE",
+        "OCTUBRE",
+        "NOVIEMBRE",
+        "DICIEMBRE",
+      ];
+      const mes = meses[fechaObj.getMonth()];
+      const año = fechaObj.getFullYear();
+      return { mes, año };
+    };
+
+    const fechaInicioFormateada = obtenerMesAño(fechaInicio);
+    const fechaCierreFormateada = obtenerMesAño(fechaCierre);
+
+    const descripcion = `${fechaInicioFormateada.mes} - ${fechaCierreFormateada.mes} ${fechaInicioFormateada.año}`;
+
+    const newPeriodo = await Periodos.create({
+      fecha_inicio: fechaInicio,
+      fecha_fin: fechaCierre,
+      descripcion,
+      status: true,
+    });
+
+    res.json({
+      msg: `El periodo ${descripcion} se creó correctamente`,
+    });
+  } catch (error) {
+    console.error("Error al crear periodo:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+export { getSeminarioActivo, rechazarCurso, createPeriodo };
