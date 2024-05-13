@@ -6,6 +6,9 @@ import {
   getSeminarioActivo,
   rechazarCurso,
   createPeriodo,
+  getPeriodos,
+  getCursos,
+  altaCurso,
 } from "../controllers/seminarioController.js";
 
 const router = Router();
@@ -25,6 +28,10 @@ router.put(
   rechazarCurso
 );
 
+router.get("/periodo", authMiddleware, verificarRol, getPeriodos);
+router.get("/cursos", authMiddleware, verificarRol, getCursos);
 router.post("/periodo", authMiddleware, verificarRol, createPeriodo);
+
+router.post("/altaCurso", authMiddleware, verificarRol, altaCurso);
 
 export default router;

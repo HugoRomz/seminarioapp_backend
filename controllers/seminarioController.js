@@ -78,6 +78,40 @@ const rechazarCurso = async (req, res) => {
   }
 };
 
+const getPeriodos = async (req, res) => {
+  try {
+    const periodos = await Periodos.findAll({
+      where: {
+        status: true,
+      },
+    });
+
+    if (periodos && periodos.length > 0) {
+      res.json(periodos);
+    } else {
+      res.status(404).json({ error: "No se encontró ningún periodo" });
+    }
+  } catch (error) {
+    console.error("Error al buscar periodos:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+const getCursos = async (req, res) => {
+  try {
+    const cursos = await Cursos.findAll();
+
+    if (cursos && cursos.length > 0) {
+      res.json(cursos);
+    } else {
+      res.status(404).json({ error: "No se encontró ningún curso" });
+    }
+  } catch (error) {
+    console.error("Error al buscar cursos:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
 const createPeriodo = async (req, res) => {
   try {
     const { fechaInicio, fechaCierre } = req.body;
@@ -128,4 +162,33 @@ const createPeriodo = async (req, res) => {
   }
 };
 
-export { getSeminarioActivo, rechazarCurso, createPeriodo };
+const altaCurso = async (req, res) => {
+  try {
+    const cursos = req.body.cursos;
+    const periodo = req.body.periodos;
+
+    for (const curso of cursos) {
+      await CursoPeriodos.create({
+        periodo_id: periodo.periodo_id,
+        curso_id: curso.curso_id,
+        status: "Pendiente",
+      });
+    }
+
+    res.json({
+      msg: `Los cursos se crearon correctamente para el periodo ${periodo.descripcion}`,
+    });
+  } catch (error) {
+    console.error("Error al crear cursos:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+export {
+  getSeminarioActivo,
+  rechazarCurso,
+  createPeriodo,
+  getPeriodos,
+  getCursos,
+  altaCurso,
+};
