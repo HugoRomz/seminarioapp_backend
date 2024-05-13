@@ -122,6 +122,7 @@ const getCursosPeriodos = async (req, res) => {
           where: { status: true },
         },
       ],
+      where: { status: "Pendiente" },
     });
     res.json(cursos);
   } catch (error) {
