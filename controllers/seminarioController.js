@@ -2,6 +2,8 @@ import { Periodos, CursoPeriodos } from "../models/Periodo.js";
 import { Cursos, DetalleCurso } from "../models/Cursos.js";
 import { Carreras } from "../models/Carreras.js";
 import { Materias } from "../models/Materias.js";
+import { Modulos } from "../models/Modulos.js";
+import { Usuarios, Docente } from "../models/Usuarios.js";
 
 import {
   handleNotFoundError,
@@ -184,6 +186,42 @@ const altaCurso = async (req, res) => {
   }
 };
 
+const getCursoById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return handleBadRequestError("Falta el id del curso", res);
+    }
+
+    const curso = await CursoPeriodos.findOne({
+      where: { curso_periodo_id: id },
+      include: [
+        {
+          model: Cursos,
+          include: [{ model: Carreras }],
+        },
+        {
+          model: Periodos,
+        },
+        {
+          model: Modulos,
+          include: [{ model: Usuarios, include: [{ model: Docente }] }],
+        },
+      ],
+    });
+
+    if (!curso) {
+      return handleNotFoundError("No se encontró el curso", res);
+    }
+
+    res.json(curso);
+  } catch (error) {
+    console.error("Error al buscar curso por id:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
 export {
   getSeminarioActivo,
   rechazarCurso,
@@ -191,4 +229,5 @@ export {
   getPeriodos,
   getCursos,
   altaCurso,
+  getCursoById,
 };
