@@ -10,6 +10,8 @@ import {
   getCursos,
   altaCurso,
   getCursoById,
+  getMateriasCurso,
+  getDocentes,
 } from "../controllers/seminarioController.js";
 
 const router = Router();
@@ -35,6 +37,15 @@ router.post("/periodo", authMiddleware, verificarRol, createPeriodo);
 
 router.post("/altaCurso", authMiddleware, verificarRol, altaCurso);
 
-router.get("/curso/:id", getCursoById);
+router.get("/curso/:id", authMiddleware, verificarRol, getCursoById);
+
+router.get(
+  "/materiasCurso/:id",
+  authMiddleware,
+  verificarRol,
+  getMateriasCurso
+);
+
+router.get("/docentes", authMiddleware, verificarRol, getDocentes);
 
 export default router;
