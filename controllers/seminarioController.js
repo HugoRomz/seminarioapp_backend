@@ -222,6 +222,58 @@ const getCursoById = async (req, res) => {
   }
 };
 
+const getMateriasCurso = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return handleBadRequestError("Falta el id del curso", res);
+    }
+    const materias = await DetalleCurso.findAll({
+      where: {
+        curso_id: id,
+      },
+      include: [Materias],
+    });
+
+    if (!materias) {
+      return handleNotFoundError("No se encontró el curso", res);
+    }
+
+    res.json(materias);
+  } catch (error) {
+    console.error("Error al buscar materias de un curso:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+const getDocentes = async (req, res) => {
+  try {
+    const docentes = await Docente.findAll({
+      include: {
+        model: Usuarios,
+        attributes: ["nombre", "apellido_p", "apellido_m"], // Seleccionar solo el campo 'nombre' del usuario
+      },
+    });
+
+    const nombreCompleto = docentes.map((docente) => {
+      return {
+        id: docente.usuario_id,
+        nombre: `${docente.usuario.nombre} ${docente.usuario.apellido_p} ${docente.usuario.apellido_m}`,
+      };
+    });
+
+    if (docentes && docentes.length > 0) {
+      res.json(nombreCompleto);
+    } else {
+      res.status(404).json({ error: "No se encontró ningún docente" });
+    }
+  } catch (error) {
+    console.error("Error al buscar docentes:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
 export {
   getSeminarioActivo,
   rechazarCurso,
@@ -230,4 +282,6 @@ export {
   getCursos,
   altaCurso,
   getCursoById,
+  getMateriasCurso,
+  getDocentes,
 };
