@@ -274,6 +274,41 @@ const getDocentes = async (req, res) => {
   }
 };
 
+const aceptarCurso = async (req, res) => {
+  try {
+    if (req.body.length === 0) {
+      return handleBadRequestError("No se enviaron datos", res);
+    }
+    for (const curso of req.body) {
+      await Modulos.create({
+        det_curso_id: curso.detalle_curso_id,
+        usuario_id: curso.docente[0].id,
+        nombre_modulo: curso.materia,
+        fecha_inicio: curso.fecha_inicio,
+        fecha_cierre: curso.fecha_cierre,
+        curso_periodo_id: curso.curso_periodo_id,
+      });
+    }
+    await CursoPeriodos.update(
+      {
+        status: "Aceptado",
+      },
+      {
+        where: {
+          curso_periodo_id: req.body[0].curso_periodo_id,
+        },
+      }
+    );
+
+    res.json({
+      msg: "La operación se realizó correctamente",
+    });
+  } catch (error) {
+    console.error("Error al aceptar curso:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
 export {
   getSeminarioActivo,
   rechazarCurso,
@@ -284,4 +319,5 @@ export {
   getCursoById,
   getMateriasCurso,
   getDocentes,
+  aceptarCurso,
 };
