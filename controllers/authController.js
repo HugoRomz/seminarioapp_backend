@@ -1,7 +1,9 @@
 import { Usuarios, UserPreregister } from "../models/Usuarios.js";
 import { Carreras } from "../models/Carreras.js";
 import { CursoPeriodos, Periodos } from "../models/Periodo.js";
-
+import {
+  sendEmailPreregister
+} from "../emails/authEmailService.js";
 import {
   handleNotFoundError,
   handleInternalServerError,
@@ -92,7 +94,7 @@ const preregistro = async (req, res) => {
     }
 
     const user = await UserPreregister.create(datosPreregistro);
-
+    await sendEmailPreregister(datosPreregistro.email_usuario);
     res.json({
       msg: "El preregistro se creó correctamente, espera un correo del administrador",
     });

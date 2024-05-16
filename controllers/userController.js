@@ -17,7 +17,12 @@ import {
   handleInternalServerError,
   separarApellidos,
   generatePassword,
+  generateCodEgresado,
 } from "../Utils/index.js";
+
+import {Carreras} from "../models/Carreras.js";
+import {Cursos} from "../models/Cursos.js";
+import {CursoPeriodos} from "../models/Periodo.js";
 
 const getUsuarios = async (req, res) => {
   try {
@@ -34,12 +39,42 @@ const getPreregister = async (req, res) => {
       where: {
         status: true,
       },
+      include: [
+        {
+          model: CursoPeriodos,
+          include: [
+            {
+              model: Cursos,
+            },
+          ],
+        },
+      ],
     });
-    res.json(usuarios);
+
+    // Mapeamos los usuarios para agregar el nombre de la carrera
+    const usuariosConCarrera = await Promise.all(
+      usuarios.map(async (usuario) => {
+        // Aquí obtenemos el nombre de la carrera basado en el ID de carrera almacenado en el usuario
+        const carrera = await Carreras.findOne({
+          where: {
+            carrera_id: usuario.carrera,
+          },
+          attributes: ["nombre_carrera"], // Seleccionamos solo el nombre de la carrera
+        });
+        // Creamos un nuevo objeto con la información del usuario y el nombre de la carrera
+        return {
+          ...usuario.toJSON(),
+          nombre_carrera: carrera ? carrera.nombre_carrera : null, // Agregamos el nombre de la carrera al objeto del usuario
+        };
+      })
+    );
+
+    res.json(usuariosConCarrera);
   } catch (error) {
     return handleInternalServerError(error, res);
   }
 };
+
 
 const getUsuariosById = async (req, res) => {
   try {
@@ -57,9 +92,6 @@ const getUsuariosById = async (req, res) => {
 };
 
 const aceptarUsuario = async (req, res) => {
-  if (Object.values(req.body).includes("")) {
-    return handleNotFoundError("Algunos campos están vacíos", res);
-  }
 
   const t = await sequelize.transaction();
 
@@ -67,22 +99,22 @@ const aceptarUsuario = async (req, res) => {
     const { apellidoPaterno, apellidoMaterno } = separarApellidos(
       req.body.apellidos
     );
-    const password = generatePassword(req.body.matricula);
-    const usuario_id = req.body.matricula.toUpperCase();
+    const password = generatePassword();
 
     const usuarioNuevo = {
-      usuario_id: usuario_id,
       nombre: req.body.nombres,
       apellido_p: apellidoPaterno,
       apellido_m: apellidoMaterno,
-      telefono_usuario: null,
+      telefono_usuario: req.body.telefono,
       email_usuario: req.body.email_usuario,
       password: password,
     };
 
+//Poner curp
+
     const UserExist = await Usuarios.findOne(
       {
-        where: { usuario_id },
+        where: { email_usuario: req.body.email_usuario },
       },
       { transaction: t }
     );
@@ -96,6 +128,23 @@ const aceptarUsuario = async (req, res) => {
     }
 
     const newUsuario = await Usuarios.create(usuarioNuevo, { transaction: t });
+
+  if (req.body.egresado === true) {
+    const egresado = {
+      cod_egresado: generateCodEgresado(),
+      trabajando:  req.body.trabajando,
+      especializado: req.body.lugar_trabajo,
+      usuario_id: newUsuario.usuario_id
+    };
+    const newEgresado = await Egresado.create(egresado, { transaction: t });
+
+  } else if (req.body.egresado === false) {
+    const alumno = {
+      matricula: req.body.id_estudiante,
+      usuario_id: newUsuario.usuario_id
+    };
+    const newAlumno = await Alumno.create(alumno, { transaction: t });
+  }
     const { email_usuario } = newUsuario;
 
     await sendEmailVerification(email_usuario, password);
@@ -103,7 +152,7 @@ const aceptarUsuario = async (req, res) => {
     const preregisterExist = await UserPreregister.update(
       { status: false },
       {
-        where: { matricula: usuario_id },
+        where: { email_usuario: req.body.email_usuario },
         transaction: t,
       }
     );

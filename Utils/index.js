@@ -138,10 +138,12 @@ function separarApellidos(apellidoCompleto) {
   return { apellidoPaterno, apellidoMaterno };
 }
 
-function generatePassword(matricula) {
+function generatePassword() {
   const caracteres =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%";
-  let password = matricula;
+  let fecha = new Date(Date.now());
+
+  let password = fecha.getFullYear();
 
   for (let i = 0; i < 6; i++) {
     const indiceAleatorio = Math.floor(Math.random() * caracteres.length);
@@ -149,6 +151,18 @@ function generatePassword(matricula) {
   }
 
   return password;
+}
+
+function generateCodEgresado() {
+  const caracteres = "0123456789";
+  let codEgresado = "";
+
+  for (let i = 0; i < 7; i++) {
+    const indiceAleatorio = Math.floor(Math.random() * caracteres.length);
+    codEgresado += caracteres.charAt(indiceAleatorio);
+  }
+
+  return codEgresado;
 }
 
 export {
@@ -167,4 +181,5 @@ export {
   generateJWT,
   separarApellidos,
   generatePassword,
+  generateCodEgresado,
 };
