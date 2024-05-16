@@ -138,7 +138,7 @@ export const Egresado = sequelize.define("egresados", {
     allowNull: true,
   },
   especializado: {
-    type: DataTypes.BOOLEAN,
+    type: DataTypes.STRING,
     allowNull: true,
   },
   calificacionFinal: {
