@@ -11,7 +11,7 @@ const data = {
       nombre_rol: "Administrador",
     },
     {
-      nombre_rol: "alumno",
+      nombre_rol: "Alumno",
     },
     {
       nombre_rol: "Docente",
