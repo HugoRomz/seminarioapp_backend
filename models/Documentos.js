@@ -22,7 +22,7 @@ export const Documentos = sequelize.define(
 );
 
 export const DetallesDocumentosAlumno = sequelize.define(
-    "det_doc_alumno",
+    "det_doc_alumnos",
     {
         det_alumno_id: {
             type: DataTypes.INTEGER,
@@ -52,7 +52,7 @@ export const DetallesDocumentosAlumno = sequelize.define(
 );
 
 export const DetallesDocumentosDocente = sequelize.define(
-    "det_doc_docente",
+    "det_doc_docentes",
     {
         det_docente_id: {
             type: DataTypes.INTEGER,
@@ -82,7 +82,7 @@ export const DetallesDocumentosDocente = sequelize.define(
 );
 
 export const DocumentosAlumnoEstado = sequelize.define(
-    "doc_alumnos_estado",
+    "doc_alumnos_estados",
     {
         alumno_estado_id: {
             type: DataTypes.INTEGER,
@@ -93,12 +93,12 @@ export const DocumentosAlumnoEstado = sequelize.define(
             type: DataTypes.INTEGER,
             allowNull: false,
             references: {
-                model: 'det_doc_alumno',
+                model: 'det_doc_alumnos',
                 key: 'det_alumno_id'
             }
         },
         usuario_id: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.UUID,
             allowNull: false,
             references: {
                 model: 'usuarios',
@@ -121,7 +121,7 @@ export const DocumentosAlumnoEstado = sequelize.define(
 );
 
 export const DocumentosDocenteEstado = sequelize.define(
-    "doc_docente_estado",
+    "doc_docente_estados",
     {
         docente_estado_id: {
             type: DataTypes.INTEGER,
@@ -132,12 +132,12 @@ export const DocumentosDocenteEstado = sequelize.define(
             type: DataTypes.INTEGER,
             allowNull: false,
             references: {
-                model: 'det_doc_docente',
+                model: 'det_doc_docentes',
                 key: 'det_docente_id'
             }
         },
         usuario_id: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.UUID,
             allowNull: false,
             references: {
                 model: 'usuarios',
@@ -183,3 +183,6 @@ DetallesDocumentosAlumno.belongsTo(Cursos, { foreignKey: 'curso_id' });
 
 Cursos.hasMany(DetallesDocumentosDocente, { foreignKey: 'curso_id' });
 DetallesDocumentosDocente.belongsTo(Cursos, { foreignKey: 'curso_id' });
+
+
+
