@@ -17,6 +17,11 @@ export const Usuarios = sequelize.define(
       type: DataTypes.STRING(50),
       allowNull: false,
     },
+    curp: {
+      type: DataTypes.STRING(18),
+      allowNull: false,
+      unique: true,
+    },
     apellido_p: {
       type: DataTypes.STRING(50),
       allowNull: false,
@@ -175,6 +180,11 @@ export const UserPreregister = sequelize.define(
     apellidos: {
       type: DataTypes.STRING(100),
       allowNull: false,
+    },
+    curp: {
+      type: DataTypes.STRING(18),
+      allowNull: false,
+      unique: true,
     },
     id_estudiante: {
       type: DataTypes.STRING(15),
