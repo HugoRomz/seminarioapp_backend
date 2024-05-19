@@ -17,7 +17,6 @@ import {
   handleInternalServerError,
   separarApellidos,
   generatePassword,
-  generateCodEgresado,
 } from "../Utils/index.js";
 
 import {Carreras} from "../models/Carreras.js";
@@ -107,14 +106,16 @@ const aceptarUsuario = async (req, res) => {
       apellido_m: apellidoMaterno,
       telefono_usuario: req.body.telefono,
       email_usuario: req.body.email_usuario,
+      curp: req.body.curp,
       password: password,
+      status: "PENDIENTE",
     };
 
 //Poner curp
 
     const UserExist = await Usuarios.findOne(
       {
-        where: { email_usuario: req.body.email_usuario },
+        where: { curp: req.body.curp },
       },
       { transaction: t }
     );
@@ -129,22 +130,22 @@ const aceptarUsuario = async (req, res) => {
 
     const newUsuario = await Usuarios.create(usuarioNuevo, { transaction: t });
 
-  if (req.body.egresado === true) {
-    const egresado = {
-      cod_egresado: generateCodEgresado(),
-      trabajando:  req.body.trabajando,
-      especializado: req.body.lugar_trabajo,
-      usuario_id: newUsuario.usuario_id
-    };
-    const newEgresado = await Egresado.create(egresado, { transaction: t });
+  // if (req.body.egresado === true) {
+  //   const egresado = {
+  //     cod_egresado: req.body.id_estudiante,
+  //     trabajando:  req.body.trabajando,
+  //     especializado: req.body.lugar_trabajo,
+  //     usuario_id: newUsuario.usuario_id
+  //   };
+  //   const newEgresado = await Egresado.create(egresado, { transaction: t });
 
-  } else if (req.body.egresado === false) {
-    const alumno = {
-      matricula: req.body.id_estudiante,
-      usuario_id: newUsuario.usuario_id
-    };
-    const newAlumno = await Alumno.create(alumno, { transaction: t });
-  }
+  // } else if (req.body.egresado === false) {
+  //   const alumno = {
+  //     matricula: req.body.id_estudiante,
+  //     usuario_id: newUsuario.usuario_id
+  //   };
+  //   const newAlumno = await Alumno.create(alumno, { transaction: t });
+  // }
     const { email_usuario } = newUsuario;
 
     await sendEmailVerification(email_usuario, password);
@@ -152,7 +153,7 @@ const aceptarUsuario = async (req, res) => {
     const preregisterExist = await UserPreregister.update(
       { status: false },
       {
-        where: { email_usuario: req.body.email_usuario },
+        where: { curp: req.body.curp },
         transaction: t,
       }
     );

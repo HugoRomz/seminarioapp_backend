@@ -9,6 +9,7 @@ import {
   handleInternalServerError,
   generateJWT,
   handleBadRequestError,
+  generateCodEgresado,
 } from "../Utils/index.js";
 import { Cursos } from "../models/Cursos.js";
 
@@ -45,12 +46,13 @@ const preregistro = async (req, res) => {
   try {
     if (req.body.es_egresado == "Sí") {
       datosPreregistro = {
-        id_estudiante: req.body.codigo_alumno || "",
+        id_estudiante: generateCodEgresado(),
         nombres: req.body.nombres || "",
         apellidos: req.body.apellidos || "",
         telefono: req.body.telefono || "",
         email_usuario: req.body.email_usuario || "",
         carrera: req.body.carrera || "",
+        curp: req.body.curp || "",
         egresado: req.body.es_egresado === "Sí" ? true : false,
 
         anio_egreso: req.body.anio_egreso || "",
@@ -71,7 +73,7 @@ const preregistro = async (req, res) => {
         telefono: req.body.telefono || "",
         email_usuario: req.body.email_usuario || "",
         carrera: req.body.carrera || "",
-
+        curp: req.body.curp || "",
         egresado: req.body.es_egresado === "Sí" ? true : false,
 
         trabajando: req.body.trabaja_actualmente === "Sí" ? true : false,
@@ -83,12 +85,12 @@ const preregistro = async (req, res) => {
       };
     }
     const UserExist = await UserPreregister.findOne({
-      where: { id_estudiante: datosPreregistro.id_estudiante },
+      where: { curp: datosPreregistro.curp },
     });
 
     if (UserExist) {
       return handleBadRequestError(
-        "La matricula o codigo de estudiante ya esta pre-registrado",
+        "La curp ya se encuentra registrada en el sistema",
         res
       );
     }
