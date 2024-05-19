@@ -21,34 +21,69 @@ const router = Router();
 router.get(
   "/seminarioActivo",
   authMiddleware,
-  verificarRol,
+  verificarRol(["Administrador"]),
   getSeminarioActivo
 );
 
 router.put(
   "/rechazarCurso/:idCurso",
   authMiddleware,
-  verificarRol,
+  verificarRol(["Administrador"]),
   rechazarCurso
 );
 
-router.get("/periodo", authMiddleware, verificarRol, getPeriodos);
-router.get("/cursos", authMiddleware, verificarRol, getCursos);
-router.post("/periodo", authMiddleware, verificarRol, createPeriodo);
+router.get(
+  "/periodo",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getPeriodos
+);
+router.get(
+  "/cursos",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getCursos
+);
+router.post(
+  "/periodo",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  createPeriodo
+);
 
-router.post("/altaCurso", authMiddleware, verificarRol, altaCurso);
+router.post(
+  "/altaCurso",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  altaCurso
+);
 
-router.get("/curso/:id", authMiddleware, verificarRol, getCursoById);
+router.get(
+  "/curso/:id",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getCursoById
+);
 
 router.get(
   "/materiasCurso/:id",
   authMiddleware,
-  verificarRol,
+  verificarRol(["Administrador"]),
   getMateriasCurso
 );
 
-router.get("/docentes", authMiddleware, verificarRol, getDocentes);
+router.get(
+  "/docentes",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getDocentes
+);
 
-router.post("/aceptarCurso", authMiddleware, verificarRol, aceptarCurso);
+router.post(
+  "/aceptarCurso",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  aceptarCurso
+);
 
 export default router;

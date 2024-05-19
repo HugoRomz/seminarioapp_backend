@@ -1,6 +1,11 @@
 import { Carreras } from "../models/Carreras.js";
 import { Materias } from "../models/Materias.js";
 import { Cursos, DetalleCurso } from "../models/Cursos.js";
+import {
+  Documentos,
+  DetallesDocumentosAlumno,
+  DetallesDocumentosDocente,
+} from "../models/Documentos.js";
 
 import {
   handleNotFoundError,
@@ -261,6 +266,67 @@ const updateCursos = async (req, res) => {
   }
 };
 
+const findDocumentos = async (req, res) => {
+  try {
+    const documentos = await Documentos.findAll();
+    if (documentos && documentos.length > 0) {
+      res.json(documentos);
+    } else {
+      console.log("No hay documentos ");
+      res
+        .status(404)
+        .json({ error: "No se encontró ningúna documento activo" });
+    }
+  } catch (error) {
+    console.error("Error al buscar documentos:", error);
+    return res
+      .status(500)
+      .json({ error: "Ocurrió un error al buscar documentos" });
+  }
+};
+
+const asignarDocumentos = async (req, res) => {
+  try {
+    const datos = req.body;
+    let detallesAlumnos = [];
+    let detallesDocentes = [];
+
+    for (const dato of datos) {
+      if (dato.tipo === "Alumno" || dato.tipo === "Egresado") {
+        dato.documento_id.forEach((documento_id) => {
+          detallesAlumnos.push({
+            documento_id: documento_id.documento_id,
+            curso_id: dato.curso_id,
+            egresado: dato.tipo === "Egresado", // true si es egresado, false si es alumno
+          });
+        });
+      } else if (dato.tipo === "Docente") {
+        dato.documento_id.forEach((documento_id) => {
+          detallesDocentes.push({
+            documento_id: documento_id.documento_id,
+            curso_id: dato.curso_id,
+          });
+        });
+      }
+    }
+
+    if (detallesAlumnos.length > 0) {
+      await DetallesDocumentosAlumno.bulkCreate(detallesAlumnos);
+    }
+
+    if (detallesDocentes.length > 0) {
+      await DetallesDocumentosDocente.bulkCreate(detallesDocentes);
+    }
+
+    res.json({
+      msg: "Los documentos se asignaron correctamente",
+    });
+  } catch (error) {
+    console.error("Error al asignar documentos:", error);
+    res.status(500).json({ error: "Ocurrió un error al asignar documentos" });
+  }
+};
+
 export {
   getCarreras,
   getMaterias,
@@ -273,4 +339,6 @@ export {
   getCursos,
   insertarCursos,
   updateCursos,
+  findDocumentos,
+  asignarDocumentos,
 };

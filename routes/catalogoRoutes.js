@@ -14,6 +14,8 @@ import {
   getCursos,
   insertarCursos,
   updateCursos,
+  findDocumentos,
+  asignarDocumentos,
 } from "../controllers/catalogoController.js";
 
 const router = Router();
@@ -87,6 +89,20 @@ router.put(
   authMiddleware,
   verificarRol(["Administrador"]),
   updateCursos
+);
+
+router.get(
+  "/documentos",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  findDocumentos
+);
+
+router.post(
+  "/asginarDocumentos",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  asignarDocumentos
 );
 
 export default router;
