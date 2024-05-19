@@ -18,6 +18,7 @@ export async function createAdmin() {
       nombre: "Rosa Isela",
       apellido_p: "Lopez",
       apellido_m: "Aguilar",
+      curp: "AULR920123MCHGSL07",
       telefono_usuario: "9620000000",
       email_usuario: "rosa.aguilar@unach.mx",
       password: "root",
