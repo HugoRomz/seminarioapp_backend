@@ -15,7 +15,6 @@ router.get("/cursoDocumento/:id", authMiddleware, verificarRol, user);
 router.get(
   "/alumnos",
   authMiddleware,
-  verificarRol(["Administrador"]),
   getAlumnos
 );
 
