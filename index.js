@@ -2,6 +2,7 @@ import { sequelize } from "./config/db.js";
 
 import authroutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import documentosRoutes from "./routes/documentosRoutes.js";
 import seminarioRoutes from "./routes/seminarioRoutes.js";
 import catalogoRoutes from "./routes/catalogoRoutes.js";
 
@@ -41,6 +42,7 @@ app.use(cors(corsOptions));
 
 // definir las rutas
 app.use("/v1-api/auth", authroutes);
+app.use("/v1-api/documentos", documentosRoutes);
 app.use("/v1-api/user", userRoutes);
 app.use("/v1-api/seminario", seminarioRoutes);
 app.use("/v1-api/catalogo", catalogoRoutes);

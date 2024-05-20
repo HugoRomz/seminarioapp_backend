@@ -1,9 +1,7 @@
 import { Usuarios, UserPreregister } from "../models/Usuarios.js";
 import { Carreras } from "../models/Carreras.js";
 import { CursoPeriodos, Periodos } from "../models/Periodo.js";
-import {
-  sendEmailPreregister
-} from "../emails/authEmailService.js";
+import { sendEmailPreregister } from "../emails/authEmailService.js";
 import {
   handleNotFoundError,
   handleInternalServerError,
