@@ -18,4 +18,5 @@ router.get("/cursoDocumento/:id", getCursoDocumentos);
 // ALUMNOS
 router.get("/alumnos", authMiddleware, getAlumnos);
 
+
 export default router;
