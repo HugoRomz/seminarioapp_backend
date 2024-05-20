@@ -19,9 +19,13 @@ import {
   generatePassword,
 } from "../Utils/index.js";
 
-import {Carreras} from "../models/Carreras.js";
-import {Cursos} from "../models/Cursos.js";
-import {CursoPeriodos} from "../models/Periodo.js";
+import { Carreras } from "../models/Carreras.js";
+import { Cursos } from "../models/Cursos.js";
+import { CursoPeriodos } from "../models/Periodo.js";
+import {
+  DetallesDocumentosAlumno,
+  DocumentosAlumnoEstado,
+} from "../models/Documentos.js";
 
 const getUsuarios = async (req, res) => {
   try {
@@ -74,7 +78,6 @@ const getPreregister = async (req, res) => {
   }
 };
 
-
 const getUsuariosById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -91,6 +94,8 @@ const getUsuariosById = async (req, res) => {
 };
 
 const aceptarUsuario = async (req, res) => {
+  const curso_id = req.body.cursos_periodo.curso_id;
+  let det_doc_alumno = [];
 
   const t = await sequelize.transaction();
 
@@ -99,7 +104,6 @@ const aceptarUsuario = async (req, res) => {
       req.body.apellidos
     );
     const password = generatePassword();
-
     const usuarioNuevo = {
       nombre: req.body.nombres,
       apellido_p: apellidoPaterno,
@@ -110,16 +114,12 @@ const aceptarUsuario = async (req, res) => {
       password: password,
       status: "PENDIENTE",
     };
-
-//Poner curp
-
     const UserExist = await Usuarios.findOne(
       {
         where: { curp: req.body.curp },
       },
       { transaction: t }
     );
-
     if (UserExist) {
       await t.rollback();
       return handleNotFoundError(
@@ -127,29 +127,10 @@ const aceptarUsuario = async (req, res) => {
         res
       );
     }
-
     const newUsuario = await Usuarios.create(usuarioNuevo, { transaction: t });
 
-  // if (req.body.egresado === true) {
-  //   const egresado = {
-  //     cod_egresado: req.body.id_estudiante,
-  //     trabajando:  req.body.trabajando,
-  //     especializado: req.body.lugar_trabajo,
-  //     usuario_id: newUsuario.usuario_id
-  //   };
-  //   const newEgresado = await Egresado.create(egresado, { transaction: t });
-
-  // } else if (req.body.egresado === false) {
-  //   const alumno = {
-  //     matricula: req.body.id_estudiante,
-  //     usuario_id: newUsuario.usuario_id
-  //   };
-  //   const newAlumno = await Alumno.create(alumno, { transaction: t });
-  // }
     const { email_usuario } = newUsuario;
-
     await sendEmailVerification(email_usuario, password);
-
     const preregisterExist = await UserPreregister.update(
       { status: false },
       {
@@ -157,7 +138,6 @@ const aceptarUsuario = async (req, res) => {
         transaction: t,
       }
     );
-
     if (!preregisterExist) {
       await t.rollback();
       return handleNotFoundError(
@@ -165,19 +145,16 @@ const aceptarUsuario = async (req, res) => {
         res
       );
     }
-
     const rolAlumno = await Roles.findOne(
       {
         where: { nombre_rol: "Alumno" },
       },
       { transaction: t }
     );
-
     if (!rolAlumno) {
       await t.rollback();
       throw new Error("Rol 'Alumno' no encontrado");
     }
-
     await Usuarios_Roles.create(
       {
         usuarioUsuarioId: newUsuario.usuario_id,
@@ -186,8 +163,41 @@ const aceptarUsuario = async (req, res) => {
       { transaction: t }
     );
 
-    await t.commit();
+    if (req.body.egresado === true) {
+      det_doc_alumno = await DetallesDocumentosAlumno.findAll(
+        {
+          where: {
+            curso_id: curso_id,
+            egresado: true,
+          },
+        },
+        { transaction: t }
+      );
+    } else if (req.body.egresado === false) {
+      det_doc_alumno = await DetallesDocumentosAlumno.findAll(
+        {
+          where: {
+            curso_id: curso_id,
+            egresado: false,
+          },
+        },
+        { transaction: t }
+      );
+    }
+    //necesito guardar los documentos que se le asignaron al alumno
+    const documentos = det_doc_alumno.map((doc) => {
+      return {
+        det_alumno_id: doc.det_alumno_id,
+        usuario_id: newUsuario.usuario_id,
+        status: "PENDIENTE",
+        comentarios: "",
+        url_file: "",
+      };
+    });
 
+    await DocumentosAlumnoEstado.bulkCreate(documentos, { transaction: t });
+
+    await t.commit();
     res.json({
       msg: "El Usuario se creó correctamente",
     });
@@ -713,3 +723,19 @@ export {
   insertarDocentes,
   updateDocentes,
 };
+
+// if (req.body.egresado === true) {
+//   const egresado = {
+//     cod_egresado: req.body.id_estudiante,
+//     trabajando:  req.body.trabajando,
+//     especializado: req.body.lugar_trabajo,
+//     usuario_id: newUsuario.usuario_id
+//   };
+//   const newEgresado = await Egresado.create(egresado, { transaction: t });
+// } else if (req.body.egresado === false) {
+//   const alumno = {
+//     matricula: req.body.id_estudiante,
+//     usuario_id: newUsuario.usuario_id
+//   };
+//   const newAlumno = await Alumno.create(alumno, { transaction: t });
+// }
