@@ -6,6 +6,7 @@ import {
   user,
   getAlumnos,
   getCursoDocumentos,
+  subirDocumentos,
 } from "../controllers/documentoController.js";
 
 const router = Router();
@@ -14,6 +15,7 @@ const router = Router();
 router.get("/user", authMiddleware, user);
 
 router.get("/cursoDocumento/:id", getCursoDocumentos);
+router.post("/subir", subirDocumentos);
 
 // ALUMNOS
 router.get("/alumnos", authMiddleware, getAlumnos);
