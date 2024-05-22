@@ -1,13 +1,13 @@
-import { transporter } from '../config/nodemailer.js';
+import { transporter } from "../config/nodemailer.js";
 
 // Función para enviar un correo de verificación
 export async function sendEmailVerification(email, pass) {
-    try {
-        const info = await transporter.sendMail({
-            from: '"SeminarioApp" <proyectoapp781@gmail.com>',
-            to: email,
-            subject: 'SIGEST - Aceptado',
-            html: `<html>
+  try {
+    const info = await transporter.sendMail({
+      from: '"SeminarioApp" <proyectoapp781@gmail.com>',
+      to: email,
+      subject: "SIGEST - Aceptado",
+      html: `<html>
         <head>
             <style>
                 body {
@@ -47,7 +47,7 @@ export async function sendEmailVerification(email, pass) {
         <body>
             <div class="container">
                 <h1>¡Bienvenido/a al Seminario de Titulación!</h1>
-                <p>Hola, nos complace informarte que tu solicitud ha sido aceptada.</p>
+                <p>Hola, nos complace informarte que tu solicitud ha sido recibida.</p>
                 <p>Aquí están los detalles de tu cuenta para acceder a nuestra aplicación:</p>
                 <ul>
                     <li>Usuario: <strong>${email}</strong></li>
@@ -61,21 +61,23 @@ export async function sendEmailVerification(email, pass) {
             </div>
         </body>
         </html>`,
-        });
-        console.log("Mensaje enviado: %s", info.messageId);
-    } catch (error) {
-        console.error(`Error al enviar el correo de verificación: ${error.message}`);
-    }
+    });
+    console.log("Mensaje enviado: %s", info.messageId);
+  } catch (error) {
+    console.error(
+      `Error al enviar el correo de verificación: ${error.message}`
+    );
+  }
 }
 
 // Función para enviar un correo de rechazo
 export async function sendEmailRejection(email) {
-    try {
-        const info = await transporter.sendMail({
-            from: '"SeminarioApp" <proyectoapp781@gmail.com>',
-            to: email,
-            subject: 'SIGEST - Rechazado',
-            html: `<html>
+  try {
+    const info = await transporter.sendMail({
+      from: '"SeminarioApp" <proyectoapp781@gmail.com>',
+      to: email,
+      subject: "SIGEST - Rechazado",
+      html: `<html>
         <head>
             <style>
                 body {
@@ -116,21 +118,21 @@ export async function sendEmailRejection(email) {
             </div>
         </body>
         </html>`,
-        });
-        console.log("Mensaje enviado: %s", info.messageId);
-    } catch (error) {
-        console.error(`Error al enviar el correo de rechazo: ${error.message}`);
-    }
+    });
+    console.log("Mensaje enviado: %s", info.messageId);
+  } catch (error) {
+    console.error(`Error al enviar el correo de rechazo: ${error.message}`);
+  }
 }
 
 // Función para enviar un correo de preregistro
 export async function sendEmailPreregister(email) {
-    try {
-        const info = await transporter.sendMail({
-            from: '"SeminarioApp" <proyectoapp781@gmail.com>',
-            to: email,
-            subject: 'SIGEST - Preregistro',
-            html: `<html>
+  try {
+    const info = await transporter.sendMail({
+      from: '"SeminarioApp" <proyectoapp781@gmail.com>',
+      to: email,
+      subject: "SIGEST - Preregistro",
+      html: `<html>
         <head>
             <style>
                 body {
@@ -170,9 +172,9 @@ export async function sendEmailPreregister(email) {
             </div>
         </body>
         </html>`,
-        });
-        console.log("Mensaje enviado: %s", info.messageId);
-    } catch (error) {
-        console.error(`Error al enviar el correo de preregistro: ${error.message}`);
-    }
+    });
+    console.log("Mensaje enviado: %s", info.messageId);
+  } catch (error) {
+    console.error(`Error al enviar el correo de preregistro: ${error.message}`);
+  }
 }

@@ -20,8 +20,7 @@ const router = Router();
 // PREREGISTROS
 router.get(
   "/seminarioActivo",
-  authMiddleware,
-  verificarRol(["Administrador"]),
+
   getSeminarioActivo
 );
 
