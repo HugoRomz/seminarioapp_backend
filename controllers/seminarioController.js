@@ -3,7 +3,7 @@ import { Cursos, DetalleCurso } from "../models/Cursos.js";
 import { Carreras } from "../models/Carreras.js";
 import { Materias } from "../models/Materias.js";
 import { Modulos } from "../models/Modulos.js";
-import { Usuarios, Docente } from "../models/Usuarios.js";
+import { Usuarios, Docente, UserPreregister } from "../models/Usuarios.js";
 
 import {
   handleNotFoundError,
@@ -27,6 +27,14 @@ const getSeminarioActivo = async (req, res) => {
     });
 
     if (cursoperiodo && cursoperiodo.length > 0) {
+      // Añade una nueva propiedad a cada objeto cursoperiodo para almacenar la cantidad de preregistros
+      for (const cp of cursoperiodo) {
+        const preregistrosCount = await UserPreregister.count({
+          where: { curso_periodo_id: cp.curso_periodo_id },
+        });
+        cp.dataValues.preregistrosCount = preregistrosCount;
+      }
+
       res.json(cursoperiodo);
     } else {
       console.log("No hay nada");
@@ -170,6 +178,20 @@ const altaCurso = async (req, res) => {
     const periodo = req.body.periodos;
 
     for (const curso of cursos) {
+      const existingCoursePeriod = await CursoPeriodos.findOne({
+        where: {
+          periodo_id: periodo.periodo_id,
+          curso_id: curso.curso_id,
+        },
+      });
+
+      if (existingCoursePeriod) {
+        return handleBadRequestError(
+          "El curso ya existe para este periodo",
+          res
+        );
+      }
+
       await CursoPeriodos.create({
         periodo_id: periodo.periodo_id,
         curso_id: curso.curso_id,

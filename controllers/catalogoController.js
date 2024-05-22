@@ -14,6 +14,7 @@ import {
   handleBadRequestError,
 } from "../Utils/index.js";
 import { where } from "sequelize";
+import { CursoPeriodos, Periodos } from "../models/Periodo.js";
 
 const getMaterias = async (req, res) => {
   try {
@@ -40,10 +41,12 @@ const insertarMateria = async (req, res) => {
   }
 
   try {
-    const { nombre_materia } = req.body;
+    const { nombre_materia, descripcion, creditos } = req.body;
 
     const newMateria = await Materias.create({
       nombre_materia,
+      descripcion,
+      creditos,
     });
 
     res.json({
@@ -184,6 +187,17 @@ const getCursos = async (req, res) => {
           include: [Materias],
         },
         Carreras,
+        {
+          model: CursoPeriodos,
+          include: [
+            {
+              model: Periodos,
+              where: {
+                status: true,
+              },
+            },
+          ],
+        },
       ],
     });
 
