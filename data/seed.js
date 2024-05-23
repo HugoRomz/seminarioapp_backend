@@ -4,6 +4,7 @@ import { Carreras } from "../models/Carreras.js";
 import { Materias } from "../models/Materias.js";
 import { createAdmin } from "./createAdmin.js";
 import { Documentos } from "../models/Documentos.js";
+import { Periodos } from "../models/Periodo.js";
 
 await sequelize.authenticate();
 const data = {
@@ -18,7 +19,7 @@ const data = {
       nombre_rol: "Docente",
     },
     {
-      nombre_rol: "becario",
+      nombre_rol: "Becario",
     },
     {
       nombre_rol: "Asistente",
@@ -59,6 +60,32 @@ const data = {
       descripcion: "Arquitectura SOA y Servicios Web",
       creditos: 8,
     },
+    {
+      nombre_materia:
+        "Configuración de Servicios de Red con Linux Debian Server",
+      descripcion: "Configuración de Servicios de Red con Linux Debian Server",
+      creditos: 8,
+    },
+    {
+      nombre_materia: "Conectividad Punto a Punto",
+      descripcion: "Conectividad Punto a Punto",
+      creditos: 8,
+    },
+    {
+      nombre_materia: "Seguridad de Redes (Hacking Ético)",
+      descripcion: "Seguridad de Redes (Hacking Ético)",
+      creditos: 8,
+    },
+    {
+      nombre_materia: "Programación de Servicios de Red",
+      descripcion: "Programación de Servicios de Red",
+      creditos: 8,
+    },
+    {
+      nombre_materia: "Administración de Windows Server 2016",
+      descripcion: "Administración de Windows Server 2016",
+      creditos: 8,
+    },
   ],
 
   documentos: [
@@ -90,7 +117,7 @@ const data = {
       nombre_documento: "Cédula Profesional",
     },
     {
-      nombre_documento: "CONSTANCIA DE SITUACION FISCAL",
+      nombre_documento: "Constancia de Situación Fiscal",
     },
     {
       nombre_documento: "Comprobante de Domicilio",
@@ -102,9 +129,6 @@ const data = {
       nombre_documento: "CURP (Clave Única de Registro de Población)",
     },
     {
-      nombre_documento: "Cedula Profesional",
-    },
-    {
       nombre_documento: "Historial académico (mínimo 8.0)",
     },
     {
@@ -114,20 +138,47 @@ const data = {
       nombre_documento: "Título Profesional",
     },
   ],
+  Periodos: [
+    {
+      descripcion: "ENERO - MAYO",
+      fecha_inicio: "2024-01-01 00:00:00-06",
+      fecha_fin: "2024-05-11 00:00:00-06",
+      status: true,
+    },
+  ],
 };
+
+async function seedDBTest() {
+  try {
+    await sequelize.transaction(async (t) => {
+      await Carreras.bulkCreate(data.carreras, { transaction: t });
+      console.log("Las carreras fueron ingresadas correctamente");
+      await Materias.bulkCreate(data.materias, { transaction: t });
+      console.log("Las materias fueron ingresadas correctamente");
+      await Periodos.bulkCreate(data.Periodos, { transaction: t });
+      console.log("Los periodos fueron ingresados correctamente");
+    });
+
+    console.log("Datos de prueba ingresados correctamente.");
+    process.exit();
+  } catch (error) {
+    console.log(error);
+    process.exit(1);
+  }
+}
 
 async function seedDB() {
   try {
-    console.log("Desde seedBD");
-    await Roles.bulkCreate(data.roles);
-    console.log("Los roles fueron ingresados correctamente");
-    await Carreras.bulkCreate(data.carreras);
-    console.log("Las carreras fueron ingresadas correctamente");
-    await Materias.bulkCreate(data.materias);
-    console.log("Las materias fueron ingresadas correctamente");
-    await Documentos.bulkCreate(data.documentos);
-    await createAdmin();
-    console.log("Usuario sembrado en la base de datos correctamente.");
+    await sequelize.transaction(async (t) => {
+      console.log("Desde seedBD");
+      await Roles.bulkCreate(data.roles, { transaction: t });
+      console.log("Los roles fueron ingresados correctamente");
+      await Documentos.bulkCreate(data.documentos, { transaction: t });
+      console.log("Los documentos fueron ingresados correctamente");
+      await createAdmin();
+      console.log("Usuario sembrado en la base de datos correctamente.");
+    });
+    console.log("Datos de prueba ingresados correctamente.");
     process.exit();
   } catch (error) {
     console.log(error);
@@ -136,11 +187,23 @@ async function seedDB() {
 }
 
 async function clearDB() {
-  console.log("Desde clearBD");
+  try {
+    await sequelize.transaction(async (t) => {
+      // eliminar todas las tablas
+      await sequelize.sync({ force: true, transaction: t });
+      console.log("Todas las tablas fueron eliminadas correctamente.");
+    });
+    process.exit();
+  } catch (error) {
+    console.log(error);
+    process.exit(1);
+  }
 }
 
 if (process.argv[2] === "--import") {
   seedDB();
+} else if (process.argv[2] === "--import:test") {
+  seedDBTest();
 } else {
   clearDB();
 }

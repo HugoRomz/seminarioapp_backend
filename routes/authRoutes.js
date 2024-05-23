@@ -8,6 +8,7 @@ import {
   user,
   getCarreras,
   getCursosPeriodos,
+  recuperarcontrasena,
 } from "../controllers/authController.js";
 
 const router = Router();
@@ -15,7 +16,7 @@ const router = Router();
 // Rutas sin proteccion
 router.post("/login", login);
 router.post("/preregistro", preregistro);
-
+router.post("/recuperarcontrasena", recuperarcontrasena);
 // Rutas para Preregistro
 router.get("/carreras", getCarreras);
 router.get("/cursosPeriodos", getCursosPeriodos);
