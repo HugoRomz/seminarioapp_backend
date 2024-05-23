@@ -4,13 +4,21 @@ import { Roles } from "../models/Roles.js";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
-
+import {
+  sendEmailComentariosDoc,
+} from "../emails/authEmailService.js";
 import {
   DocumentosAlumnoEstado,
   Documentos,
   DetallesDocumentosAlumno,
 } from "../models/Documentos.js";
-import { json } from "sequelize";
+import {
+  handleNotFoundError,
+  handleInternalServerError,
+  separarApellidos,
+  generatePassword,
+} from "../Utils/index.js";
+import { json, where } from "sequelize";
 import { v4 as uuidv4 } from "uuid";
 
 const storage = multer.diskStorage({
@@ -53,6 +61,17 @@ const getAlumnos = async (req, res) => {
         {
           model: DocumentosAlumnoEstado,
           required: false,
+          include: [
+            {
+              model: DetallesDocumentosAlumno,
+              include: [
+                {
+                  model: Documentos,
+                  attributes: ["nombre_documento"], // Only include document name
+                },
+              ],
+            },
+          ],
         },
       ],
       // where: {
@@ -144,4 +163,93 @@ const subirDocumentos = async (req, res) => {
     }
   });
 };
-export { user, getAlumnos, getCursoDocumentos, subirDocumentos };
+
+const updateDocumentoStatus = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const documento = await DocumentosAlumnoEstado.findByPk(id);
+    if (!documento) {
+      return res.status(404).json({ message: 'Documento no encontrado' });
+    }
+    
+    await DocumentosAlumnoEstado.update({
+      status: 'REVISADO',
+      comentarios: 'Revisado',
+    }, 
+    {
+      where: {alumno_estado_id: id}
+    }
+  );
+  res.json({ message: "Estatus actualizado" });
+  } catch (error) {
+    console.error('Error al actualizar el documento:', error);
+    res.status(500).json({ message: 'Error interno del servidor', error });
+  }
+};
+
+const agregarComentarios = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { comentarios } = req.body;
+
+    if (!id) {
+      return handleBadRequestError("Falta el id del documento", res);
+    }
+
+    const documento = await DocumentosAlumnoEstado.findOne({
+      where: {
+        alumno_estado_id: id,
+      },
+      include: [
+        {
+          model: DetallesDocumentosAlumno,
+          include: [
+            {
+              model: Documentos,
+              attributes: ["nombre_documento"], // Only include document name
+            },
+          ],
+        },
+        {
+          model: Usuarios,
+          attributes: ["email_usuario","nombre"], // Include user email for notification
+        },
+      ],
+    });
+
+    if (!documento) {
+      return handleNotFoundError("No se encontró el documento", res);
+    }
+
+    await DocumentosAlumnoEstado.update(
+      {
+        status: 'RECHAZADO',
+        comentarios: comentarios,
+      },
+      {
+        where: {
+          alumno_estado_id: id,
+        },
+      }
+    );
+
+    const email = documento.usuario.dataValues.email_usuario;
+    const nombreUsuario = documento.usuario.dataValues.nombre;
+    const nombreDocumento = documento.det_doc_alumno.documento.dataValues.nombre_documento;
+
+    await sendEmailComentariosDoc(email, nombreUsuario, nombreDocumento, comentarios);
+
+    res.json({
+      msg: "La operación se realizó correctamente",
+    });
+  } catch (error) {
+    console.error("Error al rechazar documento:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+const aceptarDocUsuario = async (req, res) => {
+  console.log(req.body);
+};
+
+export { user, getAlumnos, getCursoDocumentos, subirDocumentos, updateDocumentoStatus, agregarComentarios, aceptarDocUsuario};

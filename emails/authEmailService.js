@@ -2,12 +2,12 @@ import { transporter } from "../config/nodemailer.js";
 
 // Función para enviar un correo de verificación
 export async function sendEmailVerification(email, pass) {
-  try {
-    const info = await transporter.sendMail({
-      from: '"SeminarioApp" <proyectoapp781@gmail.com>',
-      to: email,
-      subject: "SIGEST - Aceptado",
-      html: `<html>
+    try {
+        const info = await transporter.sendMail({
+            from: '"SeminarioApp" <proyectoapp781@gmail.com>',
+            to: email,
+            subject: "SIGEST - Aceptado",
+            html: `<html>
         <head>
             <style>
                 body {
@@ -61,23 +61,23 @@ export async function sendEmailVerification(email, pass) {
             </div>
         </body>
         </html>`,
-    });
-    console.log("Mensaje enviado: %s", info.messageId);
-  } catch (error) {
-    console.error(
-      `Error al enviar el correo de verificación: ${error.message}`
-    );
-  }
+        });
+        console.log("Mensaje enviado: %s", info.messageId);
+    } catch (error) {
+        console.error(
+            `Error al enviar el correo de verificación: ${error.message}`
+        );
+    }
 }
 
 // Función para enviar un correo de rechazo
 export async function sendEmailRejection(email) {
-  try {
-    const info = await transporter.sendMail({
-      from: '"SeminarioApp" <proyectoapp781@gmail.com>',
-      to: email,
-      subject: "SIGEST - Rechazado",
-      html: `<html>
+    try {
+        const info = await transporter.sendMail({
+            from: '"SeminarioApp" <proyectoapp781@gmail.com>',
+            to: email,
+            subject: "SIGEST - Rechazado",
+            html: `<html>
         <head>
             <style>
                 body {
@@ -118,21 +118,21 @@ export async function sendEmailRejection(email) {
             </div>
         </body>
         </html>`,
-    });
-    console.log("Mensaje enviado: %s", info.messageId);
-  } catch (error) {
-    console.error(`Error al enviar el correo de rechazo: ${error.message}`);
-  }
+        });
+        console.log("Mensaje enviado: %s", info.messageId);
+    } catch (error) {
+        console.error(`Error al enviar el correo de rechazo: ${error.message}`);
+    }
 }
 
 // Función para enviar un correo de preregistro
 export async function sendEmailPreregister(email) {
-  try {
-    const info = await transporter.sendMail({
-      from: '"SeminarioApp" <proyectoapp781@gmail.com>',
-      to: email,
-      subject: "SIGEST - Preregistro",
-      html: `<html>
+    try {
+        const info = await transporter.sendMail({
+            from: '"SeminarioApp" <proyectoapp781@gmail.com>',
+            to: email,
+            subject: "SIGEST - Preregistro",
+            html: `<html>
         <head>
             <style>
                 body {
@@ -172,9 +172,72 @@ export async function sendEmailPreregister(email) {
             </div>
         </body>
         </html>`,
-    });
-    console.log("Mensaje enviado: %s", info.messageId);
-  } catch (error) {
-    console.error(`Error al enviar el correo de preregistro: ${error.message}`);
-  }
+        });
+        console.log("Mensaje enviado: %s", info.messageId);
+    } catch (error) {
+        console.error(`Error al enviar el correo de preregistro: ${error.message}`);
+    }
+}
+
+export async function sendEmailComentariosDoc(email, nombreUsuario, nombreDocumento, comentarios) {
+    try {
+        const info = await transporter.sendMail({
+            from: '"SeminarioApp" <proyectoapp781@gmail.com>',
+            to: email,
+            subject: 'Rechazo de Documento - SIGEST',
+            html: `<html>
+        <head>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 20px;
+                    background-color: #f4f4f4;
+                    color: #333;
+                }
+                .container {
+                    background-color: #fff;
+                    padding: 20px;
+                    border-radius: 10px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                    max-width: 600px;
+                    margin: 40px auto;
+                }
+                h1 {
+                    color: #d9534f;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 20px;
+                    font-size: 14px;
+                    color: #aaa;
+                }
+                .document-name {
+                    font-weight: bold;
+                    color: #5bc0de;
+                }
+                .rejection-reason {
+                    font-weight: bold;
+                    color: #d9534f;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>Documento Rechazado</h1>
+                <p>Hola ${nombreUsuario},</p>
+                <p>Lamentamos informarte que tu documento <span class="document-name">${nombreDocumento}</span> ha sido rechazado.</p>
+                <p>Motivo del rechazo: <span class="rejection-reason">${comentarios}</span></p>
+                <p>Por favor, revisa el documento y vuelve a enviarlo para su revisión.</p>
+                <div class="footer">
+                    <p>Este es un mensaje automático, por favor no responder.</p>
+                </div>
+            </div>
+        </body>
+        </html>`,
+        });
+        console.log("Mensaje enviado: %s", info.messageId);
+    } catch (error) {
+        console.error(`Error al enviar el correo de rechazo del documento: ${error.message}`);
+    }
 }

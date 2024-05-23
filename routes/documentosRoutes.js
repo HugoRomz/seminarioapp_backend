@@ -7,6 +7,9 @@ import {
   getAlumnos,
   getCursoDocumentos,
   subirDocumentos,
+  updateDocumentoStatus,
+  agregarComentarios,
+  aceptarDocUsuario,
 } from "../controllers/documentoController.js";
 
 const router = Router();
@@ -17,8 +20,13 @@ router.get("/user", authMiddleware, user);
 router.get("/cursoDocumento/:id", getCursoDocumentos);
 router.post("/subir", subirDocumentos);
 
-// ALUMNOS
-router.get("/alumnos", authMiddleware, getAlumnos);
+router.put("/comentarios/:id", authMiddleware, verificarRol(["Administrador"]), agregarComentarios);
 
+// ALUMNOS
+router.get("/alumnos", getAlumnos);
+
+router.put("/actualizarEstado/:id", authMiddleware, verificarRol(["Administrador"]), updateDocumentoStatus);
+
+router.post('/aceptarDocUsuario/:id', aceptarDocUsuario);
 
 export default router;

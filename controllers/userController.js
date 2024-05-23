@@ -131,6 +131,7 @@ const aceptarUsuario = async (req, res) => {
 
     const { email_usuario } = newUsuario;
     await sendEmailVerification(email_usuario, password);
+    
     const preregisterExist = await UserPreregister.update(
       { status: false },
       {
