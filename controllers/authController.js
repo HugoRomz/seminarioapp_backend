@@ -137,4 +137,29 @@ const user = async (req, res) => {
   res.json(user);
 };
 
-export { login, preregistro, user, getCarreras, getCursosPeriodos };
+const recuperarcontrasena = async (req, res) => {
+  const { email_usuario } = req.body;
+  const user = await Usuarios.findOne({
+    where: { email_usuario },
+  });
+  if (!user) {
+    return handleNotFoundError("El Usuario no existe", res);
+  }
+
+  try {
+    user.token = generateJWT(user.usuario_id);
+  } catch (error) {
+    return handleInternalServerError(error, res);
+  }
+
+  res.json({ msg: "Correo enviado" });
+};
+
+export {
+  login,
+  preregistro,
+  user,
+  getCarreras,
+  getCursosPeriodos,
+  recuperarcontrasena,
+};

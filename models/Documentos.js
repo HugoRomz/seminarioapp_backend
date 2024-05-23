@@ -15,6 +15,10 @@ export const Documentos = sequelize.define(
       type: DataTypes.STRING(255),
       allowNull: false,
     },
+    destinatario: {
+      type: DataTypes.ENUM("alumno", "docente"),
+      allowNull: false,
+    },
   },
   {
     timestamps: false,

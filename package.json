@@ -10,6 +10,7 @@
     "dev:postman": "node --watch index.js --postman",
     "seed:import": "node data/seed.js --import",
     "seed:destroy": "node data/seed.js --destroy",
+    "seed:import:test": "node data/seed.js --import:test",
     "sync": "node dbSync.js"
   },
   "author": "HugoRomz",
