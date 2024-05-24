@@ -725,18 +725,4 @@ export {
   updateDocentes,
 };
 
-// if (req.body.egresado === true) {
-//   const egresado = {
-//     cod_egresado: req.body.id_estudiante,
-//     trabajando:  req.body.trabajando,
-//     especializado: req.body.lugar_trabajo,
-//     usuario_id: newUsuario.usuario_id
-//   };
-//   const newEgresado = await Egresado.create(egresado, { transaction: t });
-// } else if (req.body.egresado === false) {
-//   const alumno = {
-//     matricula: req.body.id_estudiante,
-//     usuario_id: newUsuario.usuario_id
-//   };
-//   const newAlumno = await Alumno.create(alumno, { transaction: t });
-// }
+
