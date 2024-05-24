@@ -91,51 +91,67 @@ const data = {
   documentos: [
     {
       nombre_documento: "Acta de Nacimiento",
+      destinatario: "alumno",
     },
     {
       nombre_documento: "Carta de Aceptación",
+      destinatario: "alumno",
     },
     {
       nombre_documento: "Carta de Antecedentes No Penales",
+      destinatario: "docente",
     },
     {
       nombre_documento: "Carta de liberación de servicio social",
+      destinatario: "alumno",
     },
     {
       nombre_documento: "Carta de pasante",
+      destinatario: "alumno",
     },
     {
       nombre_documento: "Carta de Recomendación",
+      destinatario: "docente",
     },
     {
       nombre_documento: "Certificado de Capacitación Pedagógica",
+      destinatario: "alumno",
     },
     {
       nombre_documento: "Certificado de Estudios",
+      destinatario: "alumno",
     },
     {
       nombre_documento: "Cédula Profesional",
+      destinatario: "alumno",
     },
     {
       nombre_documento: "Constancia de Situación Fiscal",
+      destinatario: "docente",
     },
     {
       nombre_documento: "Comprobante de Domicilio",
+      destinatario: "docente",
     },
     {
       nombre_documento: "Comprobante de Nómina",
+      destinatario: "docente",
     },
     {
       nombre_documento: "CURP (Clave Única de Registro de Población)",
+      destinatario: "alumno",
     },
     {
       nombre_documento: "Historial académico (mínimo 8.0)",
+      destinatario: "alumno",
     },
     {
       nombre_documento: "Registro Federal de Contribuyentes (RFC)",
+      destinatario: "docente",
     },
     {
       nombre_documento: "Título Profesional",
+      destinatario: "alumno",
     },
   ],
   Periodos: [
@@ -175,9 +191,9 @@ async function seedDB() {
       console.log("Los roles fueron ingresados correctamente");
       await Documentos.bulkCreate(data.documentos, { transaction: t });
       console.log("Los documentos fueron ingresados correctamente");
-      await createAdmin();
-      console.log("Usuario sembrado en la base de datos correctamente.");
     });
+    await createAdmin();
+    console.log("Usuario sembrado en la base de datos correctamente.");
     console.log("Datos de prueba ingresados correctamente.");
     process.exit();
   } catch (error) {

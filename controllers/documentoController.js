@@ -1,12 +1,15 @@
-import { Usuarios, Alumno, Egresado, UserPreregister } from "../models/Usuarios.js";
+import {
+  Usuarios,
+  Alumno,
+  Egresado,
+  UserPreregister,
+} from "../models/Usuarios.js";
 import { Usuarios_Roles } from "../models/Usuarios_Roles.js";
 import { Roles } from "../models/Roles.js";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
-import {
-  sendEmailComentariosDoc,
-} from "../emails/authEmailService.js";
+import { sendEmailComentariosDoc } from "../emails/authEmailService.js";
 import {
   DocumentosAlumnoEstado,
   Documentos,
@@ -20,7 +23,6 @@ import {
 } from "../Utils/index.js";
 import { json, where } from "sequelize";
 import { v4 as uuidv4 } from "uuid";
-import { log } from "console";
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -149,6 +151,7 @@ const subirDocumentos = async (req, res) => {
       await DocumentosAlumnoEstado.update(
         {
           url_file: file.filename,
+          status: "PENDIENTE",
         },
         {
           where: {
@@ -170,21 +173,22 @@ const updateDocumentoStatus = async (req, res) => {
   try {
     const documento = await DocumentosAlumnoEstado.findByPk(id);
     if (!documento) {
-      return res.status(404).json({ message: 'Documento no encontrado' });
+      return res.status(404).json({ message: "Documento no encontrado" });
     }
-    
-    await DocumentosAlumnoEstado.update({
-      status: 'REVISADO',
-      comentarios: 'Revisado',
-    }, 
-    {
-      where: {alumno_estado_id: id}
-    }
-  );
-  res.json({ message: "Estatus actualizado" });
+
+    await DocumentosAlumnoEstado.update(
+      {
+        status: "REVISADO",
+        comentarios: "Revisado",
+      },
+      {
+        where: { alumno_estado_id: id },
+      }
+    );
+    res.json({ message: "Estatus actualizado" });
   } catch (error) {
-    console.error('Error al actualizar el documento:', error);
-    res.status(500).json({ message: 'Error interno del servidor', error });
+    console.error("Error al actualizar el documento:", error);
+    res.status(500).json({ message: "Error interno del servidor", error });
   }
 };
 
@@ -213,7 +217,7 @@ const agregarComentarios = async (req, res) => {
         },
         {
           model: Usuarios,
-          attributes: ["email_usuario","nombre"], // Include user email for notification
+          attributes: ["email_usuario", "nombre"], // Include user email for notification
         },
       ],
     });
@@ -222,10 +226,26 @@ const agregarComentarios = async (req, res) => {
       return handleNotFoundError("No se encontró el documento", res);
     }
 
+    // Eliminar el archivo físico si existe
+    if (documento.url_file) {
+      const filePath = path.join(
+        "public/Documentos/Alumnos",
+        documento.url_file
+      );
+      try {
+        fs.unlinkSync(filePath);
+        console.log("Archivo eliminado correctamente");
+      } catch (err) {
+        console.error("Error al eliminar el archivo:", err);
+      }
+    }
+
+    // Actualizar el estado del documento en la base de datos
     await DocumentosAlumnoEstado.update(
       {
-        status: 'RECHAZADO',
+        status: "RECHAZADO",
         comentarios: comentarios,
+        url_file: null, // Eliminar la referencia al archivo
       },
       {
         where: {
@@ -234,11 +254,18 @@ const agregarComentarios = async (req, res) => {
       }
     );
 
+    // Enviar correo electrónico con los comentarios
     const email = documento.usuario.dataValues.email_usuario;
     const nombreUsuario = documento.usuario.dataValues.nombre;
-    const nombreDocumento = documento.det_doc_alumno.documento.dataValues.nombre_documento;
+    const nombreDocumento =
+      documento.det_doc_alumno.documento.dataValues.nombre_documento;
 
-    await sendEmailComentariosDoc(email, nombreUsuario, nombreDocumento, comentarios);
+    await sendEmailComentariosDoc(
+      email,
+      nombreUsuario,
+      nombreDocumento,
+      comentarios
+    );
 
     res.json({
       msg: "La operación se realizó correctamente",
@@ -250,50 +277,56 @@ const agregarComentarios = async (req, res) => {
 };
 
 const aceptarDocUsuario = async (req, res) => {
-
   try {
     const { curp } = req.body;
 
-  const Preregistro = await UserPreregister.findOne({ where: { curp } });
+    const Preregistro = await UserPreregister.findOne({ where: { curp } });
 
-  if (!Preregistro) {
-    return handleNotFoundError("Usuario no encontrado", res);
-  }
+    if (!Preregistro) {
+      return handleNotFoundError("Usuario no encontrado", res);
+    }
 
-  const egresadoData = Preregistro.egresado;
-  if (egresadoData === true) {
-  const egresado = {
-    cod_egresado: Preregistro.id_estudiante,
-    trabajando:  Preregistro.trabajando,
-    especializado: Preregistro.lugar_trabajo,
-    usuario_id: req.body.usuario_id
-  };
-  const newEgresado = await Egresado.create(egresado);
-} else if (egresadoData === false) {
-  const alumno = {
-    matricula: Preregistro.id_estudiante,
-    usuario_id: req.body.usuario_id
-  };
-  const newAlumno = await Alumno.create(alumno);
-}
+    const egresadoData = Preregistro.egresado;
+    if (egresadoData === true) {
+      const egresado = {
+        cod_egresado: Preregistro.id_estudiante,
+        trabajando: Preregistro.trabajando,
+        especializado: Preregistro.lugar_trabajo,
+        usuario_id: req.body.usuario_id,
+      };
+      const newEgresado = await Egresado.create(egresado);
+    } else if (egresadoData === false) {
+      const alumno = {
+        matricula: Preregistro.id_estudiante,
+        usuario_id: req.body.usuario_id,
+      };
+      const newAlumno = await Alumno.create(alumno);
+    }
 
-await Usuarios.update(
-  {
-    status: 'ACTIVO',
-  },
-  {
-    where: {
-      usuario_id: req.body.usuario_id,
-    },
-  }
-);
+    await Usuarios.update(
+      {
+        status: "ACTIVO",
+      },
+      {
+        where: {
+          usuario_id: req.body.usuario_id,
+        },
+      }
+    );
 
-res.json({ message: "Aceptado" });
+    res.json({ message: "Aceptado" });
   } catch (error) {
     console.error("Error al aceptar:", error);
     return handleInternalServerError(error, res);
   }
-
 };
 
-export { user, getAlumnos, getCursoDocumentos, subirDocumentos, updateDocumentoStatus, agregarComentarios, aceptarDocUsuario};
+export {
+  user,
+  getAlumnos,
+  getCursoDocumentos,
+  subirDocumentos,
+  updateDocumentoStatus,
+  agregarComentarios,
+  aceptarDocUsuario,
+};
