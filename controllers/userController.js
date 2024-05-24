@@ -131,7 +131,7 @@ const aceptarUsuario = async (req, res) => {
 
     const { email_usuario } = newUsuario;
     await sendEmailVerification(email_usuario, password);
-    
+
     const preregisterExist = await UserPreregister.update(
       { status: false },
       {
@@ -601,6 +601,7 @@ const insertarDocentes = async (req, res) => {
       nombre: req.body.nombre,
       apellido_p: req.body.apellido_p,
       apellido_m: req.body.apellido_m,
+      curp: req.body.curp,
       telefono_usuario: req.body.telefono_usuario,
       email_usuario: req.body.email_usuario,
       password: req.body.password,
@@ -724,5 +725,3 @@ export {
   insertarDocentes,
   updateDocentes,
 };
-
-
