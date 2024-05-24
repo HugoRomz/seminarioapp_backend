@@ -5,12 +5,15 @@ import userRoutes from "./routes/userRoutes.js";
 import documentosRoutes from "./routes/documentosRoutes.js";
 import seminarioRoutes from "./routes/seminarioRoutes.js";
 import catalogoRoutes from "./routes/catalogoRoutes.js";
-
 import express from "express";
 import colors from "colors";
 import cors from "cors";
 
 import dotenv from "dotenv";
+
+import { fileURLToPath } from "url";
+import path from "path";
+
 dotenv.config();
 
 // Configurando la app
@@ -39,6 +42,13 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const filesDirectory = path.join(__dirname, "public/Documentos");
+
+app.use("/Documentos", express.static(filesDirectory));
 
 // definir las rutas
 app.use("/v1-api/auth", authroutes);
