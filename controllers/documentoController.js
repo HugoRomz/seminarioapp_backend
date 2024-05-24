@@ -1,4 +1,4 @@
-import { Usuarios, Alumno, Egresado } from "../models/Usuarios.js";
+import { Usuarios, Alumno, Egresado, UserPreregister } from "../models/Usuarios.js";
 import { Usuarios_Roles } from "../models/Usuarios_Roles.js";
 import { Roles } from "../models/Roles.js";
 import multer from "multer";
@@ -20,6 +20,7 @@ import {
 } from "../Utils/index.js";
 import { json, where } from "sequelize";
 import { v4 as uuidv4 } from "uuid";
+import { log } from "console";
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -249,7 +250,50 @@ const agregarComentarios = async (req, res) => {
 };
 
 const aceptarDocUsuario = async (req, res) => {
-  console.log(req.body);
+
+  try {
+    const { curp } = req.body;
+
+  const Preregistro = await UserPreregister.findOne({ where: { curp } });
+
+  if (!Preregistro) {
+    return handleNotFoundError("Usuario no encontrado", res);
+  }
+
+  const egresadoData = Preregistro.egresado;
+  if (egresadoData === true) {
+  const egresado = {
+    cod_egresado: Preregistro.id_estudiante,
+    trabajando:  Preregistro.trabajando,
+    especializado: Preregistro.lugar_trabajo,
+    usuario_id: req.body.usuario_id
+  };
+  const newEgresado = await Egresado.create(egresado);
+} else if (egresadoData === false) {
+  const alumno = {
+    matricula: Preregistro.id_estudiante,
+    usuario_id: req.body.usuario_id
+  };
+  const newAlumno = await Alumno.create(alumno);
+}
+
+await Usuarios.update(
+  {
+    status: 'ACTIVO',
+  },
+  {
+    where: {
+      usuario_id: req.body.usuario_id,
+    },
+  }
+);
+
+res.json({ message: "Aceptado" });
+  } catch (error) {
+    console.error("Error al aceptar:", error);
+    return handleInternalServerError(error, res);
+  }
+
 };
 
 export { user, getAlumnos, getCursoDocumentos, subirDocumentos, updateDocumentoStatus, agregarComentarios, aceptarDocUsuario};
