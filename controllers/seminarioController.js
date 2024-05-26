@@ -3,7 +3,14 @@ import { Cursos, DetalleCurso } from "../models/Cursos.js";
 import { Carreras } from "../models/Carreras.js";
 import { Materias } from "../models/Materias.js";
 import { Modulos } from "../models/Modulos.js";
-import { Usuarios, Docente, UserPreregister } from "../models/Usuarios.js";
+import {
+  Usuarios,
+  Docente,
+  UserPreregister,
+  Alumno,
+} from "../models/Usuarios.js";
+import { Op } from "sequelize";
+import sequelize from "sequelize";
 
 import {
   handleNotFoundError,
@@ -331,6 +338,38 @@ const aceptarCurso = async (req, res) => {
   }
 };
 
+const getAlumnos = async (req, res) => {
+  try {
+    const alumnos = await Alumno.findAll({
+      include: {
+        model: Usuarios,
+        attributes: ["nombre", "apellido_p", "apellido_m"],
+        where: {
+          status: "ACTIVO",
+        },
+        required: true,
+      },
+      where: {
+        usuario_id: {
+          [Op.notIn]: sequelize.literal(`
+            (SELECT usuario_id 
+             FROM calificaciones)
+          `),
+        },
+      },
+    });
+
+    if (alumnos && alumnos.length > 0) {
+      res.json(alumnos);
+    } else {
+      handleBadRequestError("No se encontraron alumnos", res);
+    }
+  } catch (error) {
+    console.error("Error al buscar alumnos:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
 export {
   getSeminarioActivo,
   rechazarCurso,
@@ -342,4 +381,5 @@ export {
   getMateriasCurso,
   getDocentes,
   aceptarCurso,
+  getAlumnos,
 };

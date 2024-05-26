@@ -13,7 +13,6 @@ import {
   generateJWT,
   handleBadRequestError,
 } from "../Utils/index.js";
-import { where } from "sequelize";
 import { CursoPeriodos, Periodos } from "../models/Periodo.js";
 
 const getMaterias = async (req, res) => {

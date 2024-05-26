@@ -13,6 +13,7 @@ import {
   getMateriasCurso,
   getDocentes,
   aceptarCurso,
+  getAlumnos,
 } from "../controllers/seminarioController.js";
 
 const router = Router();
@@ -83,6 +84,13 @@ router.post(
   authMiddleware,
   verificarRol(["Administrador"]),
   aceptarCurso
+);
+
+router.get(
+  "/alumnos",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getAlumnos
 );
 
 export default router;

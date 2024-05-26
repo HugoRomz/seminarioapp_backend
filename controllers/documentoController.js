@@ -21,7 +21,6 @@ import {
   separarApellidos,
   generatePassword,
 } from "../Utils/index.js";
-import { json, where } from "sequelize";
 import { v4 as uuidv4 } from "uuid";
 
 const storage = multer.diskStorage({
