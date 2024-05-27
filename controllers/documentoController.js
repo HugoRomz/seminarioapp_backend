@@ -26,7 +26,7 @@ import {
 } from "../Utils/index.js";
 import { v4 as uuidv4 } from "uuid";
 
-const storage = multer.diskStorage({
+const storageAlumnos = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "public/Documentos/Alumnos");
   },
@@ -39,7 +39,21 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: storage }).single("documento");
+const storageDocentes = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "public/Documentos/Docentes");
+  },
+  filename: function (req, file, cb) {
+    const uniqueName = uuidv4();
+    const fileExtension = file.originalname.split(".").pop();
+    const currentDate = new Date().toISOString().slice(0, 10);
+
+    cb(null, `${currentDate}.${uniqueName}.${fileExtension}`);
+  },
+});
+
+const uploadAlumnos = multer({ storage: storageAlumnos }).single("documento");
+const uploadDocentes = multer({ storage: storageDocentes }).single("documento");
 
 const user = async (req, res) => {
   const { user } = req;
@@ -133,7 +147,6 @@ const getDocentes = async (req, res) => {
   }
 };
 
-
 const getCursoDocumentos = async (req, res) => {
   const { id } = req.params;
   try {
@@ -145,7 +158,7 @@ const getCursoDocumentos = async (req, res) => {
           include: [
             {
               model: Documentos,
-              attributes: ["nombre_documento"], // Only include document name
+              attributes: ["nombre_documento"],
             },
           ],
         },
@@ -159,7 +172,7 @@ const getCursoDocumentos = async (req, res) => {
   }
 };
 const subirDocumentos = async (req, res) => {
-  upload(req, res, async (err) => {
+  uploadAlumnos(req, res, async (err) => {
     if (err) {
       console.error("Error al subir el archivo:", err);
       return res.status(500).send("Error interno del servidor");
@@ -486,7 +499,9 @@ const aceptarDocUsuarioDocente = async (req, res) => {
     }
 
     // Buscar al docente por usuario_id
-    const docente = await Docente.findOne({ where: { usuario_id: usuario.usuario_id } });
+    const docente = await Docente.findOne({
+      where: { usuario_id: usuario.usuario_id },
+    });
 
     if (!docente) {
       return handleNotFoundError("Docente no encontrado", res);
@@ -523,6 +538,85 @@ const aceptarDocUsuarioDocente = async (req, res) => {
   }
 };
 
+const getCursoDocumentosDocente = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const documentos = await DocumentosDocenteEstado.findAll({
+      where: { usuario_id: id },
+      include: [
+        {
+          model: DetallesDocumentosDocente,
+          include: [
+            {
+              model: Documentos,
+              attributes: ["nombre_documento"],
+            },
+          ],
+        },
+      ],
+    });
+
+    res.json(documentos);
+  } catch (error) {
+    console.error("Error al obtener documentos del curso:", error);
+    res.status(500).send("Error interno del servidor");
+  }
+};
+const subirDocumentosDocente = async (req, res) => {
+  uploadDocentes(req, res, async (err) => {
+    if (err) {
+      console.error("Error al subir el archivo:", err);
+      return res.status(500).send("Error interno del servidor");
+    }
+    const { file } = req;
+
+    try {
+      const documentoInfoString = req.body.documentoInfo;
+      const documento = JSON.parse(documentoInfoString);
+
+      const existingDocumento = await DocumentosDocenteEstado.findOne({
+        where: {
+          docente_estado_id: documento.docente_estado_id,
+          usuario_id: documento.usuario_id,
+        },
+      });
+
+      if (existingDocumento) {
+        if (existingDocumento.url_file) {
+          try {
+            const filePath = path.join(
+              "public/Documentos/Docentes",
+              existingDocumento.url_file
+            );
+
+            fs.unlinkSync(filePath);
+            console.log("Archivo antiguo eliminado correctamente");
+          } catch (err) {
+            console.error("Error al eliminar el archivo antiguo:", err);
+          }
+        }
+      }
+
+      await DocumentosDocenteEstado.update(
+        {
+          url_file: file.filename,
+          status: "PENDIENTE",
+        },
+        {
+          where: {
+            usuario_id: documento.usuario_id,
+            docente_estado_id: documento.docente_estado_id,
+          },
+        }
+      );
+      res.json({ message: "Documento subido correctamente" });
+    } catch (error) {
+      console.error("Error al subir el documento:", error);
+      res.status(500).send("Error interno del servidor");
+    }
+  });
+};
+
 export {
   user,
   getAlumnos,
@@ -535,4 +629,6 @@ export {
   getDocentes,
   updateDocumentoStatusDocente,
   aceptarDocUsuarioDocente,
+  getCursoDocumentosDocente,
+  subirDocumentosDocente,
 };
