@@ -10,6 +10,10 @@ import {
   updateDocumentoStatus,
   agregarComentarios,
   aceptarDocUsuario,
+  agregarComentariosDocente,
+  getDocentes,
+  updateDocumentoStatusDocente,
+  aceptarDocUsuarioDocente,
 } from "../controllers/documentoController.js";
 
 const router = Router();
@@ -20,13 +24,27 @@ router.get("/user", authMiddleware, user);
 router.get("/cursoDocumento/:id", getCursoDocumentos);
 router.post("/subir", subirDocumentos);
 
+// ALUMNOS
+
 router.put("/comentarios/:id", authMiddleware, verificarRol(["Administrador"]), agregarComentarios);
 
-// ALUMNOS
 router.get("/alumnos", getAlumnos);
 
 router.put("/actualizarEstado/:id", authMiddleware, verificarRol(["Administrador"]), updateDocumentoStatus);
 
 router.post('/aceptarDocUsuario/:id', aceptarDocUsuario);
+
+
+// DOCENTES 
+
+router.get("/docentes", getDocentes);
+
+router.put("/actualizarEstadoDocente/:id", authMiddleware, verificarRol(["Administrador"]), updateDocumentoStatusDocente);
+
+router.put("/comentariosDocente/:id", authMiddleware, verificarRol(["Administrador"]), agregarComentariosDocente);
+
+router.post('/aceptarDocUsuarioDocente/:id', aceptarDocUsuarioDocente);
+
+
 
 export default router;
