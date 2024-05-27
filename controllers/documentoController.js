@@ -3,6 +3,7 @@ import {
   Alumno,
   Egresado,
   UserPreregister,
+  Docente,
 } from "../models/Usuarios.js";
 import { Usuarios_Roles } from "../models/Usuarios_Roles.js";
 import { Roles } from "../models/Roles.js";
@@ -14,6 +15,8 @@ import {
   DocumentosAlumnoEstado,
   Documentos,
   DetallesDocumentosAlumno,
+  DocumentosDocenteEstado,
+  DetallesDocumentosDocente,
 } from "../models/Documentos.js";
 import {
   handleNotFoundError,
@@ -87,6 +90,49 @@ const getAlumnos = async (req, res) => {
     res.status(500).send("Error interno del servidor");
   }
 };
+
+const getDocentes = async (req, res) => {
+  try {
+    const usuarios = await Usuarios.findAll({
+      include: [
+        {
+          model: Roles,
+          where: { nombre_rol: "Docente" },
+          through: { attributes: [] },
+        },
+        {
+          model: Docente,
+          required: false,
+        },
+        {
+          model: DocumentosDocenteEstado,
+          required: false,
+          include: [
+            {
+              model: DetallesDocumentosDocente,
+              include: [
+                {
+                  model: Documentos,
+                  attributes: ["nombre_documento"], // Only include document name
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      // Uncomment and modify the following line if you want to filter active users only
+      // where: {
+      //   status: "ACTIVO",
+      // },
+    });
+
+    res.json(usuarios);
+  } catch (error) {
+    console.error("Error al obtener docentes:", error);
+    res.status(500).send("Error interno del servidor");
+  }
+};
+
 
 const getCursoDocumentos = async (req, res) => {
   const { id } = req.params;
@@ -320,6 +366,163 @@ const aceptarDocUsuario = async (req, res) => {
   }
 };
 
+const updateDocumentoStatusDocente = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const documento = await DocumentosDocenteEstado.findByPk(id);
+    if (!documento) {
+      return res.status(404).json({ message: "Documento no encontrado" });
+    }
+
+    await DocumentosDocenteEstado.update(
+      {
+        status: "REVISADO",
+        comentarios: "Revisado",
+      },
+      {
+        where: { docente_estado_id: id },
+      }
+    );
+    res.json({ message: "Estatus actualizado" });
+  } catch (error) {
+    console.error("Error al actualizar el documento:", error);
+    res.status(500).json({ message: "Error interno del servidor", error });
+  }
+};
+
+const agregarComentariosDocente = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { comentarios } = req.body;
+
+    if (!id) {
+      return handleBadRequestError("Falta el id del documento", res);
+    }
+
+    const documento = await DocumentosDocenteEstado.findOne({
+      where: {
+        docente_estado_id: id,
+      },
+      include: [
+        {
+          model: DetallesDocumentosDocente,
+          include: [
+            {
+              model: Documentos,
+              attributes: ["nombre_documento"], // Solo incluir el nombre del documento
+            },
+          ],
+        },
+        {
+          model: Usuarios,
+          attributes: ["email_usuario", "nombre"], // Incluir el correo electrónico del usuario para la notificación
+        },
+      ],
+    });
+
+    if (!documento) {
+      return handleNotFoundError("No se encontró el documento", res);
+    }
+
+    // Eliminar el archivo físico si existe
+    if (documento.url_file) {
+      const filePath = path.join(
+        "public/Documentos/Docentes",
+        documento.url_file
+      );
+      try {
+        fs.unlinkSync(filePath);
+        console.log("Archivo eliminado correctamente");
+      } catch (err) {
+        console.error("Error al eliminar el archivo:", err);
+      }
+    }
+
+    // Actualizar el estado del documento en la base de datos
+    await DocumentosDocenteEstado.update(
+      {
+        status: "RECHAZADO",
+        comentarios: comentarios,
+        url_file: null, // Eliminar la referencia al archivo
+      },
+      {
+        where: {
+          docente_estado_id: id,
+        },
+      }
+    );
+
+    // Enviar correo electrónico con los comentarios
+    const email = documento.usuario.dataValues.email_usuario;
+    const nombreUsuario = documento.usuario.dataValues.nombre;
+    const nombreDocumento =
+      documento.det_doc_docente.documento.dataValues.nombre_documento;
+
+    await sendEmailComentariosDoc(
+      email,
+      nombreUsuario,
+      nombreDocumento,
+      comentarios
+    );
+
+    res.json({
+      msg: "La operación se realizó correctamente",
+    });
+  } catch (error) {
+    console.error("Error al rechazar documento:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+const aceptarDocUsuarioDocente = async (req, res) => {
+  try {
+    const { curp, usuario_id } = req.body;
+
+    // Buscar el usuario por CURP
+    const usuario = await Usuarios.findOne({ where: { curp } });
+
+    if (!usuario) {
+      return handleNotFoundError("Usuario no encontrado", res);
+    }
+
+    // Buscar al docente por usuario_id
+    const docente = await Docente.findOne({ where: { usuario_id: usuario.usuario_id } });
+
+    if (!docente) {
+      return handleNotFoundError("Docente no encontrado", res);
+    }
+
+    // Actualizar el registro del docente con la información adicional
+    await Docente.update(
+      {
+        usuario_id: usuario_id,
+      },
+      {
+        where: {
+          usuario_id: usuario.usuario_id,
+        },
+      }
+    );
+
+    // Actualizar el estado del usuario a "ACTIVO"
+    await Usuarios.update(
+      {
+        status: "ACTIVO",
+      },
+      {
+        where: {
+          usuario_id: usuario_id,
+        },
+      }
+    );
+
+    res.json({ message: "Docente aceptado y usuario actualizado a ACTIVO" });
+  } catch (error) {
+    console.error("Error al aceptar docente:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
 export {
   user,
   getAlumnos,
@@ -328,4 +531,8 @@ export {
   updateDocumentoStatus,
   agregarComentarios,
   aceptarDocUsuario,
+  agregarComentariosDocente,
+  getDocentes,
+  updateDocumentoStatusDocente,
+  aceptarDocUsuarioDocente,
 };
