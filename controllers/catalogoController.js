@@ -197,6 +197,8 @@ const getCursos = async (req, res) => {
             },
           ],
         },
+        { model: DetallesDocumentosAlumno, include: [Documentos] },
+        { model: DetallesDocumentosDocente, include: [Documentos] },
       ],
     });
 

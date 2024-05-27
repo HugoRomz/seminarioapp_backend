@@ -605,6 +605,7 @@ const insertarDocentes = async (req, res) => {
       telefono_usuario: req.body.telefono_usuario,
       email_usuario: req.body.email_usuario,
       password: req.body.password,
+      status: "PENDIENTE",
     };
 
     const UserExist = await Docente.findOne(
