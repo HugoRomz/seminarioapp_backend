@@ -10,17 +10,22 @@ import {
   Alumno,
   Egresado,
 } from "../models/Usuarios.js";
+
+import {
+  DetallesDocumentosDocente,
+  Documentos,
+  DocumentosDocenteEstado,
+} from "../models/Documentos.js";
 import { Roles } from "../models/Roles.js";
 import { Op } from "sequelize";
-import sequelize from "sequelize";
-
+import sequelizet from "sequelize";
+import { sequelize } from "../config/db.js";
 import {
   handleNotFoundError,
   handleInternalServerError,
   generateJWT,
   handleBadRequestError,
 } from "../Utils/index.js";
-import { where } from "sequelize";
 
 const getSeminarioActivo = async (req, res) => {
   try {
@@ -264,6 +269,7 @@ const getCursoById = async (req, res) => {
           include: [{ model: Usuarios, include: [{ model: Docente }] }],
         },
       ],
+      order: [[Modulos, "fecha_inicio", "ASC"]],
     });
 
     if (!curso) {
@@ -330,10 +336,27 @@ const getDocentes = async (req, res) => {
 };
 
 const aceptarCurso = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
     if (req.body.length === 0) {
       return handleBadRequestError("No se enviaron datos", res);
     }
+
+    const cursos = await CursoPeriodos.findByPk(req.body[0].curso_periodo_id);
+    const DocumentosDATA = await DetallesDocumentosDocente.findAll({
+      where: {
+        curso_id: cursos.curso_id,
+      },
+      include: {
+        model: Documentos,
+        attributes: ["documento_id", "nombre_documento"],
+      },
+      attributes: ["det_docente_id"],
+      transaction: t,
+    });
+
+    const estadosDocentes = [];
+
     for (const curso of req.body) {
       await Modulos.create({
         det_curso_id: curso.detalle_curso_id,
@@ -342,8 +365,22 @@ const aceptarCurso = async (req, res) => {
         fecha_inicio: curso.fecha_inicio,
         fecha_cierre: curso.fecha_cierre,
         curso_periodo_id: curso.curso_periodo_id,
+        transaction: t,
       });
+
+      for (const documento of DocumentosDATA) {
+        estadosDocentes.push({
+          det_docente_id: documento.det_docente_id,
+          usuario_id: curso.docente[0].id,
+          status: "PENDIENTE",
+        });
+      }
     }
+
+    await DocumentosDocenteEstado.bulkCreate(estadosDocentes, {
+      transaction: t,
+    });
+
     await CursoPeriodos.update(
       {
         status: "Aceptado",
@@ -352,14 +389,17 @@ const aceptarCurso = async (req, res) => {
         where: {
           curso_periodo_id: req.body[0].curso_periodo_id,
         },
+        transaction: t,
       }
     );
-
+    await t.commit();
     res.json({
       msg: "La operación se realizó correctamente",
     });
   } catch (error) {
     console.error("Error al aceptar curso:", error);
+
+    await t.rollback();
     return handleInternalServerError(error, res);
   }
 };
@@ -377,7 +417,7 @@ const getAlumnos = async (req, res) => {
       },
       where: {
         usuario_id: {
-          [Op.notIn]: sequelize.literal(`
+          [Op.notIn]: sequelizet.literal(`
             (SELECT usuario_id 
              FROM calificaciones)
           `),
@@ -437,6 +477,36 @@ const asignarAlumnos = async (req, res) => {
   }
 };
 
+const editModulo = async (req, res) => {
+  try {
+    const { modulo_id } = req.params;
+    const { fecha_inicio, fecha_cierre } = req.body;
+
+    if (!modulo_id) {
+      return handleBadRequestError("Falta el id del módulo", res);
+    }
+
+    await Modulos.update(
+      {
+        fecha_inicio,
+        fecha_cierre,
+      },
+      {
+        where: {
+          modulo_id,
+        },
+      }
+    );
+
+    res.json({
+      msg: "El módulo se actualizó correctamente",
+    });
+  } catch (error) {
+    console.error("Error al editar módulo:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
 export {
   getSeminarioActivo,
   rechazarCurso,
@@ -450,4 +520,5 @@ export {
   aceptarCurso,
   getAlumnos,
   asignarAlumnos,
+  editModulo,
 };
