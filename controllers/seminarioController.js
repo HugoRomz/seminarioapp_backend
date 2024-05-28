@@ -2,13 +2,15 @@ import { Periodos, CursoPeriodos } from "../models/Periodo.js";
 import { Cursos, DetalleCurso } from "../models/Cursos.js";
 import { Carreras } from "../models/Carreras.js";
 import { Materias } from "../models/Materias.js";
-import { Modulos } from "../models/Modulos.js";
+import { Calificaciones, Modulos } from "../models/Modulos.js";
 import {
   Usuarios,
   Docente,
   UserPreregister,
   Alumno,
+  Egresado,
 } from "../models/Usuarios.js";
+import { Roles } from "../models/Roles.js";
 import { Op } from "sequelize";
 import sequelize from "sequelize";
 
@@ -34,7 +36,6 @@ const getSeminarioActivo = async (req, res) => {
     });
 
     if (cursoperiodo && cursoperiodo.length > 0) {
-      // Añade una nueva propiedad a cada objeto cursoperiodo para almacenar la cantidad de preregistros
       for (const cp of cursoperiodo) {
         const preregistrosCount = await UserPreregister.count({
           where: { curso_periodo_id: cp.curso_periodo_id },
@@ -42,6 +43,31 @@ const getSeminarioActivo = async (req, res) => {
         cp.dataValues.preregistrosCount = preregistrosCount;
       }
 
+      const aspirantes = await Usuarios.count({
+        include: [
+          {
+            model: Alumno,
+            required: false,
+          },
+          {
+            model: Egresado,
+            required: false,
+          },
+          {
+            model: Roles,
+            where: {
+              nombre_rol: "Alumno",
+            },
+          },
+        ],
+        where: {
+          status: "ACTIVO",
+        },
+      });
+      //AGREGAR ASPIRANTES AL CURSOPERIODO
+      for (const cp of cursoperiodo) {
+        cp.dataValues.aspirantes = aspirantes;
+      }
       res.json(cursoperiodo);
     } else {
       console.log("No hay nada");
@@ -370,6 +396,47 @@ const getAlumnos = async (req, res) => {
   }
 };
 
+const asignarAlumnos = async (req, res) => {
+  try {
+    const { cursoId } = req.params;
+    const alumnos = req.body.usuario_id;
+
+    if (!cursoId) {
+      return handleBadRequestError("Falta el id del curso", res);
+    }
+
+    const modulos = await Modulos.findAll({
+      where: {
+        curso_periodo_id: cursoId,
+      },
+    });
+
+    if (!modulos.length) {
+      return handleBadRequestError(
+        "No se encontraron módulos para el curso indicado",
+        res
+      );
+    }
+
+    for (const modulo of modulos) {
+      for (const alumno of alumnos) {
+        await Calificaciones.create({
+          usuario_id: alumno.usuario_id,
+          modulo_id: modulo.modulo_id,
+          calificacion: 5,
+        });
+      }
+    }
+
+    res.json({
+      msg: "Los alumnos se asignaron correctamente",
+    });
+  } catch (error) {
+    console.error("Error al asignar alumnos:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
 export {
   getSeminarioActivo,
   rechazarCurso,
@@ -382,4 +449,5 @@ export {
   getDocentes,
   aceptarCurso,
   getAlumnos,
+  asignarAlumnos,
 };

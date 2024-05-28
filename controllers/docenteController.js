@@ -1,7 +1,8 @@
 import { Carreras } from "../models/Carreras.js";
 import { Cursos } from "../models/Cursos.js";
-import { Modulos } from "../models/Modulos.js";
+import { Modulos, Calificaciones } from "../models/Modulos.js";
 import { CursoPeriodos, Periodos } from "../models/Periodo.js";
+import { Usuarios } from "../models/Usuarios.js";
 import {
   handleBadRequestError,
   handleInternalServerError,
@@ -25,7 +26,7 @@ const getModulos = async (req, res) => {
               include: [
                 {
                   model: Carreras,
-                  attributes: ["nombre_carrera"], // Solo obtener el nombre de la carrera
+                  attributes: ["nombre_carrera"],
                 },
               ],
             },
@@ -38,6 +39,16 @@ const getModulos = async (req, res) => {
           where: {
             status: "Aceptado",
           },
+        },
+        {
+          model: Calificaciones,
+          include: [
+            {
+              model: Usuarios,
+              attributes: ["usuario_id", "nombre", "apellido_p", "apellido_m"],
+            },
+          ],
+          attributes: ["calificacion_id", "calificacion"],
         },
       ],
     });
