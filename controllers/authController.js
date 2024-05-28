@@ -1,13 +1,14 @@
 import { Usuarios, UserPreregister } from "../models/Usuarios.js";
 import { Carreras } from "../models/Carreras.js";
 import { CursoPeriodos, Periodos } from "../models/Periodo.js";
-import { sendEmailPreregister } from "../emails/authEmailService.js";
+import { sendEmailPreregister, sendEmailRecuperarContrasena } from "../emails/authEmailService.js";
 import {
   handleNotFoundError,
   handleInternalServerError,
   generateJWT,
   handleBadRequestError,
   generateCodEgresado,
+  UniqueId,
 } from "../Utils/index.js";
 import { Cursos } from "../models/Cursos.js";
 
@@ -139,21 +140,78 @@ const user = async (req, res) => {
 
 const recuperarcontrasena = async (req, res) => {
   const { email_usuario } = req.body;
-  const user = await Usuarios.findOne({
-    where: { email_usuario },
-  });
-  if (!user) {
-    return handleNotFoundError("El Usuario no existe", res);
-  }
-
+  
   try {
-    user.token = generateJWT(user.usuario_id);
+    const user = await Usuarios.findOne({ where: { email_usuario } });
+    
+    if (!user) {
+      return handleNotFoundError("El Usuario no existe", res);
+    }
+
+    const token = UniqueId(user.usuario_id);
+    user.token = token;
+    await user.save();
+
+    // Enviar correo electrónico con los datos
+    const email = user.email_usuario;
+    const nombreUsuario = user.nombre;
+
+    await sendEmailRecuperarContrasena(email, nombreUsuario, token);
+
+    return res.json({ msg: "Correo enviado" }); // Asegurarse de que solo se envía una respuesta
   } catch (error) {
     return handleInternalServerError(error, res);
   }
-
-  res.json({ msg: "Correo enviado" });
 };
+
+const verificarContrasenaToken = async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    // Buscar el usuario por el token usando la cláusula where
+    const validarToken = await Usuarios.findOne({ where: { token } });
+
+    if (!validarToken) {
+      return handleNotFoundError("Hubo un error, Token no válido", res);
+    }
+
+    return res.json({ msg: "Token válido" });
+  } catch (error) {
+    return handleInternalServerError(error, res);
+  }
+};
+
+const updateContrasena = async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    // Buscar el usuario por el token
+    const user = await Usuarios.findOne({ where: { token } });
+
+    if (!user) {
+      return handleNotFoundError("Hubo un error, Token no válido", res);
+    }
+
+    // Obtener la nueva contraseña del cuerpo de la solicitud
+    const { password } = req.body;
+
+    // Actualizar el token y la contraseña del usuario
+    user.token = '';
+    user.password = password;
+
+    // Guardar los cambios en la base de datos
+    await user.save();
+
+    // Responder con un mensaje de éxito
+    return res.json({
+      msg: 'Contraseña modificada correctamente'
+    });
+  } catch (error) {
+    // Manejar cualquier error
+    return handleInternalServerError(error, res);
+  }
+};
+
 
 export {
   login,
@@ -162,4 +220,6 @@ export {
   getCarreras,
   getCursosPeriodos,
   recuperarcontrasena,
+  verificarContrasenaToken,
+  updateContrasena,
 };

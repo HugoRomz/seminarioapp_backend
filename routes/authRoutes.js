@@ -9,6 +9,8 @@ import {
   getCarreras,
   getCursosPeriodos,
   recuperarcontrasena,
+  verificarContrasenaToken,
+  updateContrasena,
 } from "../controllers/authController.js";
 
 const router = Router();
@@ -17,6 +19,9 @@ const router = Router();
 router.post("/login", login);
 router.post("/preregistro", preregistro);
 router.post("/recuperarcontrasena", recuperarcontrasena);
+router.route("/recuperarcontrasena/:token")
+  .get(verificarContrasenaToken)
+  .put(updateContrasena);
 // Rutas para Preregistro
 router.get("/carreras", getCarreras);
 router.get("/cursosPeriodos", getCursosPeriodos);

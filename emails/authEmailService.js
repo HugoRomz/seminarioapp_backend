@@ -240,4 +240,73 @@ export async function sendEmailComentariosDoc(email, nombreUsuario, nombreDocume
     } catch (error) {
         console.error(`Error al enviar el correo de rechazo del documento: ${error.message}`);
     }
+    
+}
+
+export async function sendEmailRecuperarContrasena(email, nombreUsuario, token) {
+    try {
+        const info = await transporter.sendMail({
+            from: '"SeminarioApp" <proyectoapp781@gmail.com>',
+            to: email,
+            subject: 'Reestablecer contraseña - SIGEST',
+            html: `<html>
+        <head>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 20px;
+                    background-color: #f4f4f4;
+                    color: #333;
+                }
+                .container {
+                    background-color: #fff;
+                    padding: 20px;
+                    border-radius: 10px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                    max-width: 600px;
+                    margin: 40px auto;
+                }
+                h1 {
+                    color: #5bc0de;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 20px;
+                    font-size: 14px;
+                    color: #aaa;
+                }
+                .btn {
+                    display: inline-block;
+                    padding: 10px 20px;
+                    margin: 20px 0;
+                    font-size: 16px;
+                    color: #fff;
+                    background-color: #5bc0de;
+                    text-decoration: none;
+                    border-radius: 5px;
+                }
+                .btn:hover {
+                    background-color: #31b0d5;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>Reestablecer Contraseña</h1>
+                <p>Hola ${nombreUsuario},</p>
+                <p>Hemos recibido una solicitud para reestablecer tu contraseña.</p>
+                <p>Por favor, haz clic en el siguiente botón para reestablecer tu contraseña:</p>
+                <a href="${process.env.FRONTEND_URL}/auth/nuevacontrasena/${token}" class="btn">Reestablecer Contraseña</a>
+                <div class="footer">
+                    <p>Este es un mensaje automático, por favor no responder.</p>
+                </div>
+            </div>
+        </body>
+        </html>`,
+        });
+        console.log("Mensaje enviado: %s", info.messageId);
+    } catch (error) {
+        console.error(`Error al enviar el correo de reestablecimiento de contraseña: ${error.message}`);
+    }
 }
