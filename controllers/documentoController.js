@@ -169,6 +169,7 @@ const subirDocumentos = async (req, res) => {
     }
 
     let urlArchivo = resultado.secure_url;
+    const url_filePublic = resultado.public_id;
 
     // Convertir la URL del PDF a una imagen JPG utilizando la transformación de página
     if (urlArchivo.endsWith(".pdf")) {
@@ -198,6 +199,7 @@ const subirDocumentos = async (req, res) => {
     await DocumentosAlumnoEstado.update(
       {
         url_file: urlArchivo,
+        url_filePublic: url_filePublic,
         status: "PENDIENTE",
       },
       {
@@ -274,17 +276,26 @@ const agregarComentarios = async (req, res) => {
       return handleNotFoundError("No se encontró el documento", res);
     }
 
-    // Eliminar el archivo físico si existe
-    if (documento.url_file) {
-      const filePath = path.join(
-        "public/Documentos/Alumnos",
-        documento.url_file
-      );
+    // // Eliminar el archivo físico si existe
+    // if (documento.url_file) {
+    //   const filePath = path.join(
+    //     "public/Documentos/Alumnos",
+    //     documento.url_file
+    //   );
+    //   try {
+    //     fs.unlinkSync(filePath);
+    //     console.log("Archivo eliminado correctamente");
+    //   } catch (err) {
+    //     console.error("Error al eliminar el archivo:", err);
+    //   }
+    // }
+    if (documento.url_filePublic) {
+      console.log(documento.url_filePublic);
       try {
-        fs.unlinkSync(filePath);
-        console.log("Archivo eliminado correctamente");
+        await cloudinary.uploader.destroy(documento.url_filePublic);
+        console.log("Archivo eliminado correctamente de Cloudinary");
       } catch (err) {
-        console.error("Error al eliminar el archivo:", err);
+        console.error("Error al eliminar el archivo de Cloudinary:", err);
       }
     }
 
@@ -293,7 +304,8 @@ const agregarComentarios = async (req, res) => {
       {
         status: "RECHAZADO",
         comentarios: comentarios,
-        url_file: null, // Eliminar la referencia al archivo
+        url_file: null,
+        url_filePublic: null,
       },
       {
         where: {
@@ -427,17 +439,27 @@ const agregarComentariosDocente = async (req, res) => {
       return handleNotFoundError("No se encontró el documento", res);
     }
 
-    // Eliminar el archivo físico si existe
-    if (documento.url_file) {
-      const filePath = path.join(
-        "public/Documentos/Docentes",
-        documento.url_file
-      );
+    // // Eliminar el archivo físico si existe
+    // if (documento.url_file) {
+    //   const filePath = path.join(
+    //     "public/Documentos/Docentes",
+    //     documento.url_file
+    //   );
+    //   try {
+    //     fs.unlinkSync(filePath);
+    //     console.log("Archivo eliminado correctamente");
+    //   } catch (err) {
+    //     console.error("Error al eliminar el archivo:", err);
+    //   }
+    // }
+
+    if (documento.url_filePublic) {
+      console.log(documento.url_filePublic);
       try {
-        fs.unlinkSync(filePath);
-        console.log("Archivo eliminado correctamente");
+        await cloudinary.uploader.destroy(documento.url_filePublic);
+        console.log("Archivo eliminado correctamente de Cloudinary");
       } catch (err) {
-        console.error("Error al eliminar el archivo:", err);
+        console.error("Error al eliminar el archivo de Cloudinary:", err);
       }
     }
 
@@ -446,7 +468,8 @@ const agregarComentariosDocente = async (req, res) => {
       {
         status: "RECHAZADO",
         comentarios: comentarios,
-        url_file: null, // Eliminar la referencia al archivo
+        url_file: null,
+        url_filePublic: null,
       },
       {
         where: {
@@ -566,6 +589,7 @@ const subirDocumentosDocente = async (req, res) => {
     });
 
     let urlArchivo = resultado.secure_url;
+    const url_filePublic = resultado.public_id;
 
     // Convertir la URL del PDF a una imagen JPG utilizando la transformación de página
     if (urlArchivo.endsWith(".pdf")) {
@@ -590,6 +614,7 @@ const subirDocumentosDocente = async (req, res) => {
     await DocumentosDocenteEstado.update(
       {
         url_file: urlArchivo,
+        url_filePublic: url_filePublic,
         status: "PENDIENTE",
       },
       {

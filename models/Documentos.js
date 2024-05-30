@@ -121,6 +121,10 @@ export const DocumentosAlumnoEstado = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    url_filePublic: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     status: {
       type: DataTypes.STRING(15),
     },
@@ -159,6 +163,10 @@ export const DocumentosDocenteEstado = sequelize.define(
       allowNull: true,
     },
     url_file: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    url_filePublic: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
