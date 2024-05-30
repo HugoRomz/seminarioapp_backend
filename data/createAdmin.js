@@ -20,7 +20,7 @@ export async function createAdmin() {
       apellido_m: "Aguilar",
       curp: "AULR920123MCHGSL07",
       telefono_usuario: "9620000000",
-      email_usuario: "rosa.aguilar@unach.mx",
+      email_usuario: "rosa.aguilarfalso@unach.mx",
       password: "root",
       status: "ACTIVO",
     });
@@ -39,7 +39,7 @@ export async function createAdmin() {
     ]);
 
     await Docente.create({
-      num_plaza: "xxxxx",
+      num_plaza: "E0363040000111",
       licenciatura: "Licenciatura",
       maestria: "Maestría",
       doctorado: "Doctorado",

@@ -5,6 +5,8 @@ import { Materias } from "../models/Materias.js";
 import { createAdmin } from "./createAdmin.js";
 import { Documentos } from "../models/Documentos.js";
 import { Periodos } from "../models/Periodo.js";
+import { Usuarios, Docente } from "../models/Usuarios.js";
+import { Usuarios_Roles } from "../models/Usuarios_Roles.js";
 
 await sequelize.authenticate();
 const data = {
@@ -154,12 +156,66 @@ const data = {
       destinatario: "alumno",
     },
   ],
-  Periodos: [
+  periodos: [
     {
       descripcion: "ENERO - MAYO",
       fecha_inicio: "2024-01-01 00:00:00-06",
       fecha_fin: "2024-05-11 00:00:00-06",
       status: true,
+    },
+  ],
+  docentes: [
+    {
+      nombre: "Rene Servando",
+      apellido_p: "Rivera",
+      apellido_m: "Roblero",
+      curp: "TFRO650605MGTRJQ23",
+      telefono_usuario: "9621234567",
+      email_usuario: "rene.servandofalso@unach.mx",
+      password: "root",
+      num_plaza: "E0363040000112",
+      licenciatura: "Computer Science",
+      maestria: "Information Technology",
+      doctorado: "Software Engineering",
+    },
+    {
+      nombre: "Erwin",
+      apellido_p: "Bermudez",
+      apellido_m: "Casillas",
+      curp: "YIJI250220MQRMMK20",
+      telefono_usuario: "9621234567",
+      email_usuario: "erwin.bermudezfalso@unach.mx",
+      password: "root",
+      num_plaza: "E0363040000113",
+      licenciatura: "Computer Science",
+      maestria: "Information Technology",
+      doctorado: "Software Engineering",
+    },
+    {
+      nombre: "Jesus Arnulfo",
+      apellido_p: "Zacarias",
+      apellido_m: "Santos",
+      curp: "ZRPV650313MOCTJX68",
+      telefono_usuario: "9621234567",
+      email_usuario: "zacarias.santosdfalso@unach.mx",
+      password: "root",
+      num_plaza: "E0363040000114",
+      licenciatura: "Computer Science",
+      maestria: "Information Technology",
+      doctorado: "Software Engineering",
+    },
+    {
+      nombre: "Vannesa ",
+      apellido_p: "Benavides",
+      apellido_m: "Garcia",
+      curp: "SDZF801110MBCWFA85",
+      telefono_usuario: "9621234567",
+      email_usuario: "benavidez.garciafalso@unach.mx",
+      password: "root",
+      num_plaza: "E0363040000115",
+      licenciatura: "Computer Science",
+      maestria: "Information Technology",
+      doctorado: "Software Engineering",
     },
   ],
 };
@@ -171,14 +227,55 @@ async function seedDBTest() {
       console.log("Las carreras fueron ingresadas correctamente");
       await Materias.bulkCreate(data.materias, { transaction: t });
       console.log("Las materias fueron ingresadas correctamente");
-      await Periodos.bulkCreate(data.Periodos, { transaction: t });
+      await Periodos.bulkCreate(data.periodos, { transaction: t });
       console.log("Los periodos fueron ingresados correctamente");
+
+      for (const docente of data.docentes) {
+        const user = await Usuarios.create(
+          {
+            nombre: docente.nombre,
+            apellido_p: docente.apellido_p,
+            apellido_m: docente.apellido_m,
+            curp: docente.curp,
+            telefono_usuario: docente.telefono_usuario,
+            email_usuario: docente.email_usuario,
+            password: docente.password,
+          },
+          { transaction: t }
+        );
+
+        const docenteRole = await Roles.findOne({
+          where: { nombre_rol: "Docente" },
+        });
+
+        await Usuarios_Roles.bulkCreate(
+          [
+            {
+              usuarioUsuarioId: user.usuario_id,
+              roleRolId: docenteRole.rol_id,
+            },
+          ],
+          { transaction: t }
+        );
+
+        await Docente.create(
+          {
+            num_plaza: docente.num_plaza,
+            licenciatura: docente.licenciatura,
+            maestria: docente.maestria,
+            doctorado: docente.doctorado,
+            usuario_id: user.usuario_id,
+          },
+          { transaction: t }
+        );
+      }
+      console.log("Los docentes fueron ingresados correctamente");
     });
 
     console.log("Datos de prueba ingresados correctamente.");
     process.exit();
   } catch (error) {
-    console.log(error);
+    console.error(error);
     process.exit(1);
   }
 }
