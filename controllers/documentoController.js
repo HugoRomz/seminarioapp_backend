@@ -7,10 +7,11 @@ import {
 } from "../models/Usuarios.js";
 import { Usuarios_Roles } from "../models/Usuarios_Roles.js";
 import { Roles } from "../models/Roles.js";
-import multer from "multer";
-import fs from "fs";
-import path from "path";
-import { sendEmailComentariosDoc } from "../emails/authEmailService.js";
+
+import {
+  sendEmailComentariosDoc,
+  sendEmailAceptado,
+} from "../emails/authEmailService.js";
 import {
   DocumentosAlumnoEstado,
   Documentos,
@@ -373,8 +374,13 @@ const aceptarDocUsuario = async (req, res) => {
         },
       }
     );
+    const email_usuario = Preregistro.email_usuario;
 
-    res.json({ message: "Aceptado" });
+    await sendEmailAceptado(email_usuario);
+
+    res.json({
+      msg: "La operación se realizó correctamente",
+    });
   } catch (error) {
     console.error("Error al aceptar:", error);
     return handleInternalServerError(error, res);
