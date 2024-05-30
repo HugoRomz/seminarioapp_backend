@@ -25,35 +25,7 @@ import {
   generatePassword,
 } from "../Utils/index.js";
 import { v4 as uuidv4 } from "uuid";
-
-const storageAlumnos = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/Documentos/Alumnos");
-  },
-  filename: function (req, file, cb) {
-    const uniqueName = uuidv4();
-    const fileExtension = file.originalname.split(".").pop();
-    const currentDate = new Date().toISOString().slice(0, 10);
-
-    cb(null, `${currentDate}.${uniqueName}.${fileExtension}`);
-  },
-});
-
-const storageDocentes = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/Documentos/Docentes");
-  },
-  filename: function (req, file, cb) {
-    const uniqueName = uuidv4();
-    const fileExtension = file.originalname.split(".").pop();
-    const currentDate = new Date().toISOString().slice(0, 10);
-
-    cb(null, `${currentDate}.${uniqueName}.${fileExtension}`);
-  },
-});
-
-const uploadAlumnos = multer({ storage: storageAlumnos }).single("documento");
-const uploadDocentes = multer({ storage: storageDocentes }).single("documento");
+import cloudinary from "../config/cloudinary.js";
 
 const user = async (req, res) => {
   const { user } = req;
@@ -172,58 +144,76 @@ const getCursoDocumentos = async (req, res) => {
   }
 };
 const subirDocumentos = async (req, res) => {
-  uploadAlumnos(req, res, async (err) => {
-    if (err) {
-      console.error("Error al subir el archivo:", err);
-      return res.status(500).send("Error interno del servidor");
-    }
-    const { file } = req;
+  try {
+    // Accede al archivo subido por Multer desde req.file
+    const file = req.file;
 
-    try {
-      const documentoInfoString = req.body.documentoInfo;
-      const documento = JSON.parse(documentoInfoString);
+    // Asegúrate de que req.body.documentoInfo está presente y es una cadena JSON válida
+    const documentoInfoString = req.body.documentoInfo;
+    const documento = JSON.parse(documentoInfoString);
 
-      const existingDocumento = await DocumentosAlumnoEstado.findOne({
-        where: {
-          alumno_estado_id: documento.alumno_estado_id,
-          usuario_id: documento.usuario_id,
-        },
-      });
+    // Extrae usuario_id del objeto documento
+    const usuarioId = documento.usuario_id;
 
-      if (existingDocumento) {
-        if (existingDocumento.url_file) {
-          try {
-            const filePath = path.join(
-              "public/Documentos/Alumnos",
-              existingDocumento.url_file
-            );
+    // Sube el archivo a Cloudinary y especifica la carpeta
+    const resultado = await cloudinary.uploader.upload(file.path, {
+      folder: `Documentos/Alumnos/${usuarioId}`, // Carpeta personalizada para el alumno
+      resource_type: "auto", // Asegura que Cloudinary detecte el tipo de archivo correctamente
+    });
 
-            fs.unlinkSync(filePath);
-            console.log("Archivo antiguo eliminado correctamente");
-          } catch (err) {
-            console.error("Error al eliminar el archivo antiguo:", err);
-          }
-        }
-      }
-
-      await DocumentosAlumnoEstado.update(
-        {
-          url_file: file.filename,
-          status: "PENDIENTE",
-        },
-        {
-          where: {
-            usuario_id: documento.usuario_id,
-            alumno_estado_id: documento.alumno_estado_id,
-          },
-        }
+    // Verifica que la URL segura ha sido generada
+    if (!resultado.secure_url) {
+      throw new Error(
+        "No se ha podido obtener la URL segura del archivo subido"
       );
-      res.json({ message: "Documento subido correctamente" });
-    } catch (error) {
-      console.error("Error al subir el documento:", error);
-      res.status(500).send("Error interno del servidor");
     }
-  });
+
+    let urlArchivo = resultado.secure_url;
+
+    // Convertir la URL del PDF a una imagen JPG utilizando la transformación de página
+    if (urlArchivo.endsWith(".pdf")) {
+      urlArchivo = urlArchivo
+        .replace(".pdf", ".jpg")
+        .replace("/upload/", "/upload/pg_1/");
+    }
+
+    // Busca un documento existente
+    const existingDocumento = await DocumentosAlumnoEstado.findOne({
+      where: {
+        alumno_estado_id: documento.alumno_estado_id,
+        usuario_id: usuarioId,
+      },
+    });
+
+    // Si existe un documento existente y tiene una URL de archivo, elimina el archivo anterior de Cloudinary
+    if (existingDocumento && existingDocumento.url_file) {
+      const publicId = existingDocumento.url_file
+        .split("/")
+        .pop()
+        .split(".")[0];
+      await cloudinary.uploader.destroy(publicId);
+    }
+
+    // Actualiza la información del documento en la base de datos
+    await DocumentosAlumnoEstado.update(
+      {
+        url_file: urlArchivo,
+        status: "PENDIENTE",
+      },
+      {
+        where: {
+          usuario_id: usuarioId,
+          alumno_estado_id: documento.alumno_estado_id,
+        },
+      }
+    );
+
+    // Envía una respuesta al cliente con el mensaje de éxito
+    res.json({ message: "Documento subido correctamente" });
+  } catch (error) {
+    console.error("Error al subir el documento:", error);
+    res.status(500).send("Error interno del servidor");
+  }
 };
 
 const updateDocumentoStatus = async (req, res) => {
@@ -563,58 +553,59 @@ const getCursoDocumentosDocente = async (req, res) => {
   }
 };
 const subirDocumentosDocente = async (req, res) => {
-  uploadDocentes(req, res, async (err) => {
-    if (err) {
-      console.error("Error al subir el archivo:", err);
-      return res.status(500).send("Error interno del servidor");
+  try {
+    // Accede al archivo subido por Multer desde req.file
+    const file = req.file;
+
+    const documentoInfoString = req.body.documentoInfo;
+    const documento = JSON.parse(documentoInfoString);
+
+    // Sube el archivo a Cloudinary y especifica la carpeta
+    const resultado = await cloudinary.uploader.upload(file.path, {
+      folder: `Documentos/Docentes/${documento.usuario_id}`, // Carpeta personalizada para el docente
+    });
+
+    let urlArchivo = resultado.secure_url;
+
+    // Convertir la URL del PDF a una imagen JPG utilizando la transformación de página
+    if (urlArchivo.endsWith(".pdf")) {
+      urlArchivo = urlArchivo
+        .replace(".pdf", ".jpg")
+        .replace("/upload/", "/upload/pg_1/");
     }
-    const { file } = req;
+    // Busca un documento existente
+    const existingDocumento = await DocumentosDocenteEstado.findOne({
+      where: {
+        docente_estado_id: documento.docente_estado_id,
+        usuario_id: documento.usuario_id,
+      },
+    });
 
-    try {
-      const documentoInfoString = req.body.documentoInfo;
-      const documento = JSON.parse(documentoInfoString);
+    // Si existe un documento existente y tiene una URL de archivo, elimina el archivo anterior de Cloudinary
+    if (existingDocumento && existingDocumento.url_file) {
+      await cloudinary.uploader.destroy(existingDocumento.url_file);
+    }
 
-      const existingDocumento = await DocumentosDocenteEstado.findOne({
+    // Actualiza la información del documento en la base de datos
+    await DocumentosDocenteEstado.update(
+      {
+        url_file: urlArchivo,
+        status: "PENDIENTE",
+      },
+      {
         where: {
-          docente_estado_id: documento.docente_estado_id,
           usuario_id: documento.usuario_id,
+          docente_estado_id: documento.docente_estado_id,
         },
-      });
-
-      if (existingDocumento) {
-        if (existingDocumento.url_file) {
-          try {
-            const filePath = path.join(
-              "public/Documentos/Docentes",
-              existingDocumento.url_file
-            );
-
-            fs.unlinkSync(filePath);
-            console.log("Archivo antiguo eliminado correctamente");
-          } catch (err) {
-            console.error("Error al eliminar el archivo antiguo:", err);
-          }
-        }
       }
+    );
 
-      await DocumentosDocenteEstado.update(
-        {
-          url_file: file.filename,
-          status: "PENDIENTE",
-        },
-        {
-          where: {
-            usuario_id: documento.usuario_id,
-            docente_estado_id: documento.docente_estado_id,
-          },
-        }
-      );
-      res.json({ message: "Documento subido correctamente" });
-    } catch (error) {
-      console.error("Error al subir el documento:", error);
-      res.status(500).send("Error interno del servidor");
-    }
-  });
+    // Envía una respuesta al cliente con el mensaje de éxito
+    res.json({ message: "Documento subido correctamente" });
+  } catch (error) {
+    console.error("Error al subir el documento:", error);
+    res.status(500).send("Error interno del servidor");
+  }
 };
 
 export {
