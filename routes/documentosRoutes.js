@@ -1,6 +1,7 @@
 import { Router } from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
 import verificarRol from "../middleware/verificarRol.js";
+import upload from "../middleware/multer.js";
 
 import {
   user,
@@ -24,10 +25,14 @@ const router = Router();
 router.get("/user", authMiddleware, user);
 
 router.get("/cursoDocumento/:id", getCursoDocumentos);
-router.post("/subir", subirDocumentos);
+router.post("/subir", upload.single("documento"), subirDocumentos);
 
 router.get("/cursoDocumentoDocente/:id", getCursoDocumentosDocente);
-router.post("/subirDocDocente", subirDocumentosDocente);
+router.post(
+  "/subirDocDocente",
+  upload.single("documento"),
+  subirDocumentosDocente
+);
 
 // ALUMNOS
 
