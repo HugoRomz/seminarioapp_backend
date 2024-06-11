@@ -48,7 +48,12 @@ const getModulos = async (req, res) => {
               attributes: ["usuario_id", "nombre", "apellido_p", "apellido_m"],
             },
           ],
-          attributes: ["calificacion_id", "calificacion"],
+          attributes: [
+            "calificacion_id",
+            "calificacion",
+            "calificacion_proyecto",
+            "calificacion_final",
+          ],
         },
       ],
     });
@@ -66,4 +71,38 @@ const getModulos = async (req, res) => {
   }
 };
 
-export { getModulos };
+const updateCalificacion = async (req, res) => {
+  const { id } = req.params;
+  const { calificacion, calificacion_proyecto } = req.body;
+  try {
+    const calificacionUpdate = await Calificaciones.findOne({
+      where: {
+        calificacion_id: id,
+      },
+    });
+    if (!calificacionUpdate) {
+      return handleBadRequestError(
+        "No se pudo encontrar la calificación.",
+        res
+      );
+    }
+    calificacionUpdate.calificacion = calificacion;
+    calificacionUpdate.calificacion_proyecto = calificacion_proyecto;
+    await calificacionUpdate.save();
+
+    if (!calificacionUpdate) {
+      return handleBadRequestError(
+        "No se pudo actualizar la calificación.",
+        res
+      );
+    }
+    res.json({
+      msg: "Calificación actualizada correctamente.",
+    });
+  } catch (error) {
+    console.error("Error al actualizar la calificación:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+export { getModulos, updateCalificacion };
