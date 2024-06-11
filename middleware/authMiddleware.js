@@ -15,7 +15,9 @@ const authMiddleware = async (req, res, next) => {
       // Buscar el usuario y sus roles
       const user = await Usuarios.findOne({
         where: { usuario_id: decoded.id },
-        attributes: { exclude: ["password"] },
+        attributes: {
+          exclude: ["password", "token", "updatedAt", "createdAt"],
+        },
         include: [
           {
             model: Roles,

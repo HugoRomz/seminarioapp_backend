@@ -406,18 +406,28 @@ const aceptarCurso = async (req, res) => {
 
 const getAlumnos = async (req, res) => {
   try {
-    const alumnos = await Alumno.findAll({
-      include: {
-        model: Usuarios,
-        attributes: ["nombre", "apellido_p", "apellido_m"],
-        where: {
-          status: "ACTIVO",
+    const alumnos = await Usuarios.findAll({
+      attributes: ["usuario_id", "nombre", "apellido_p", "apellido_m"],
+      include: [
+        {
+          model: Alumno,
+          required: false,
         },
-        required: true,
-      },
+        {
+          model: Egresado,
+          required: false,
+        },
+        {
+          model: Roles,
+          where: {
+            nombre_rol: "Alumno",
+          },
+        },
+      ],
       where: {
+        status: "ACTIVO",
         usuario_id: {
-          [Op.notIn]: sequelizet.literal(`
+          [Op.notIn]: sequelize.literal(`
             (SELECT usuario_id 
              FROM calificaciones)
           `),
