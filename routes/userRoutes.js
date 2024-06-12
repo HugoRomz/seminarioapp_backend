@@ -12,6 +12,7 @@ import {
   aceptarUsuario,
   rechazarUsuario,
   getAlumnos,
+  getPeriodos,
   deleteAlumnos,
   insertarAlumnos,
   updateAlumnos,
@@ -26,6 +27,13 @@ const router = Router();
 // Rutas accesibles para todos los usuarios
 router.get("/usuarios", getUsuarios);
 router.get("/usuarios/:id", getUsuariosById);
+
+router.get(
+  "/periodo",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getPeriodos
+);
 
 // PREREGISTROS
 router.get("/preregister", getPreregister);
