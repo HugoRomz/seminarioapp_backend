@@ -21,7 +21,7 @@ import {
 
 import { Carreras } from "../models/Carreras.js";
 import { Cursos } from "../models/Cursos.js";
-import { CursoPeriodos } from "../models/Periodo.js";
+import { Periodos, CursoPeriodos } from "../models/Periodo.js";
 import {
   DetallesDocumentosAlumno,
   DocumentosAlumnoEstado,
@@ -32,6 +32,25 @@ const getUsuarios = async (req, res) => {
     const usuarios = await Usuarios.findAll();
     res.json(usuarios);
   } catch (error) {
+    return handleInternalServerError(error, res);
+  }
+};
+
+const getPeriodos = async (req, res) => {
+  try {
+    const periodos = await Periodos.findAll({
+      where: {
+        status: true,
+      },
+    });
+
+    if (periodos && periodos.length > 0) {
+      res.json(periodos);
+    } else {
+      res.status(404).json({ error: "No se encontró ningún periodo" });
+    }
+  } catch (error) {
+    console.error("Error al buscar periodos:", error);
     return handleInternalServerError(error, res);
   }
 };
@@ -330,10 +349,15 @@ const getAlumnos = async (req, res) => {
           model: Egresado,
           required: false,
         },
+        {
+          model: CursoPeriodos,
+          include: [
+            {
+              model: Cursos,
+            },
+          ],
+        },
       ],
-      // where: {
-      //   status: "ACTIVO", // Asegurándonos de que el usuario está activo, si es necesario
-      // },
     });
 
     res.json(usuarios);
@@ -725,4 +749,5 @@ export {
   deleteDocentes,
   insertarDocentes,
   updateDocentes,
+  getPeriodos,
 };

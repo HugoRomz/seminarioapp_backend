@@ -46,6 +46,14 @@ export const Usuarios = sequelize.define(
       type: DataTypes.STRING(15),
       defaultValue: "ACTIVO",
     },
+    curso_periodo_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: CursoPeriodos,
+        key: "curso_periodo_id",
+      },
+    },
     token: {
       type: DataTypes.STRING,
       defaultValue: UniqueId,
@@ -247,3 +255,4 @@ export const UserPreregister = sequelize.define(
 
 // Definir la relación con cursos_periodos
 UserPreregister.belongsTo(CursoPeriodos, { foreignKey: "curso_periodo_id" });
+Usuarios.belongsTo(CursoPeriodos, { foreignKey: 'curso_periodo_id' });
