@@ -333,6 +333,7 @@ const deleteUsuarios = async (req, res) => {
 
 const getAlumnos = async (req, res) => {
   try {
+    const { id } = req.params;
     // Busca usuarios con el rol de "Alumno", que sabemos tiene el ID 3
     const usuarios = await Usuarios.findAll({
       include: [
@@ -356,6 +357,9 @@ const getAlumnos = async (req, res) => {
               model: Cursos,
             },
           ],
+          where: {
+            periodo_id: id,
+          },
         },
       ],
     });
@@ -399,105 +403,124 @@ const deleteAlumnos = async (req, res) => {
 };
 
 const insertarAlumnos = async (req, res) => {
-  if (Object.values(req.body).includes("")) {
-    return handleNotFoundError("Algunos campos están vacíos", res);
-  }
+  return handleNotFoundError("Función no implementada", res);
+  // if (Object.values(req.body).includes("")) {
+  //   return handleNotFoundError("Algunos campos están vacíos", res);
+  // }
 
-  const t = await sequelize.transaction();
+  // const t = await sequelize.transaction();
+  // let det_doc_alumno = [];
 
-  try {
-    const matricula = req.body.matricula.toUpperCase();
+  // try {
+  //   // generar contraseña
+  //   // Crear nuevo usuario
+  //   const usuarioNuevo = {
+  //     nombre: req.body.nombre,
+  //     apellido_p: req.body.apellido_p,
+  //     apellido_m: req.body.apellido_m,
+  //     telefono_usuario: req.body.telefono_usuario,
+  //     email_usuario: req.body.email_usuario,
+  //     curp: req.body.curp,
+  //     password: req.body.password,
+  //     status: "PENDIENTE",
+  //   };
 
-    const usuarioNuevo = {
-      nombre: req.body.nombre,
-      apellido_p: req.body.apellido_p,
-      apellido_m: req.body.apellido_m,
-      telefono_usuario: req.body.telefono_usuario,
-      email_usuario: req.body.email_usuario,
-      password: req.body.password,
-    };
+  //   // Verificar si el usuario ya existe
+  //   const UserExist = await Usuarios.findOne(
+  //     {
+  //       where: { curp: req.body.curp },
+  //     },
+  //     { transaction: t }
+  //   );
 
-    let UserExist;
-    if (req.body.esEgresado) {
-      UserExist = await Egresado.findOne(
-        {
-          where: { cod_egresado: matricula },
-        },
-        { transaction: t }
-      );
-    } else {
-      UserExist = await Alumno.findOne(
-        {
-          where: { matricula },
-        },
-        { transaction: t }
-      );
-    }
+  //   if (UserExist) {
+  //     await t.rollback();
+  //     return handleNotFoundError(
+  //       "El usuario ya existe, por favor verifícalo",
+  //       res
+  //     );
+  //   }
 
-    if (UserExist) {
-      await t.rollback();
-      return handleNotFoundError(
-        "El usuario ya existe, por favor verifícalo",
-        res
-      );
-    }
+  //   // Crear nuevo usuario en la base de datos
+  //   const newUsuario = await Usuarios.create(usuarioNuevo, { transaction: t });
 
-    const newUsuario = await Usuarios.create(usuarioNuevo, { transaction: t });
+  //   // // Enviar correo de verificación
+  //   // const { email_usuario } = newUsuario;
+  //   // await sendEmailVerification(email_usuario, password);
 
-    const rolAlumno = await Roles.findOne(
-      {
-        where: { nombre_rol: "Alumno" },
-      },
-      { transaction: t }
-    );
+  //   // Asignar rol de Alumno
+  //   const rolAlumno = await Roles.findOne(
+  //     {
+  //       where: { nombre_rol: "Alumno" },
+  //     },
+  //     { transaction: t }
+  //   );
 
-    if (!rolAlumno) {
-      await t.rollback();
-      throw new Error("Rol 'Alumno' no encontrado");
-    }
+  //   if (!rolAlumno) {
+  //     await t.rollback();
+  //     throw new Error("Rol 'Alumno' no encontrado");
+  //   }
 
-    await Usuarios_Roles.create(
-      {
-        usuarioUsuarioId: newUsuario.usuario_id,
-        roleRolId: rolAlumno.rol_id,
-      },
-      { transaction: t }
-    );
+  //   await Usuarios_Roles.create(
+  //     {
+  //       usuarioUsuarioId: newUsuario.usuario_id,
+  //       roleRolId: rolAlumno.rol_id,
+  //     },
+  //     { transaction: t }
+  //   );
 
-    if (req.body.esEgresado) {
-      await Egresado.create(
-        {
-          cod_egresado: matricula,
-          usuario_id: newUsuario.usuario_id,
-        },
-        { transaction: t }
-      );
-    } else {
-      await Alumno.create(
-        {
-          matricula,
-          usuario_id: newUsuario.usuario_id,
-        },
-        { transaction: t }
-      );
-    }
+  //   // Obtener documentos según si es egresado o no
+  //   if (req.body.esEgresado) {
+  //     det_doc_alumno = await DetallesDocumentosAlumno.findAll(
+  //       {
+  //         where: {
+  //           curso_id: req.body.curso_id,
+  //           egresado: true,
+  //         },
+  //       },
+  //       { transaction: t }
+  //     );
+  //   } else {
+  //     det_doc_alumno = await DetallesDocumentosAlumno.findAll(
+  //       {
+  //         where: {
+  //           curso_id: req.body.curso_id,
+  //           egresado: false,
+  //         },
+  //       },
+  //       { transaction: t }
+  //     );
+  //   }
 
-    await t.commit();
+  //   // Asignar documentos al alumno
+  //   const documentos = det_doc_alumno.map((doc) => {
+  //     return {
+  //       det_alumno_id: doc.det_alumno_id,
+  //       usuario_id: newUsuario.usuario_id,
+  //       status: "PENDIENTE",
+  //       comentarios: "",
+  //       url_file: "",
+  //     };
+  //   });
 
-    res.json({
-      msg: "El Usuario se creó correctamente",
-    });
-  } catch (error) {
-    await t.rollback();
-    console.error("Error al crear usuario:", error);
-    return handleInternalServerError(error, res);
-  }
+  //   await DocumentosAlumnoEstado.bulkCreate(documentos, { transaction: t });
+
+  //   // Confirmar la transacción
+  //   await t.commit();
+  //   res.json({
+  //     msg: "El Usuario se creó correctamente",
+  //   });
+  // } catch (error) {
+  //   await t.rollback();
+  //   console.error("Error al crear usuario:", error);
+  //   return handleInternalServerError(error, res);
+  // }
 };
 const updateAlumnos = async (req, res) => {
   const { id } = req.params;
   const {
     usuario_id,
-    matricula,
+    curp,
     nombre,
     apellido_p,
     apellido_m,
@@ -507,39 +530,36 @@ const updateAlumnos = async (req, res) => {
     esEgresado,
   } = req.body;
 
+  let matricula = "";
+
+  if (req.body.alumno) {
+    matricula = req.body.alumno.matricula;
+  } else if (req.body.egresado) {
+    matricula = req.body.egresado.cod_egresado;
+  }
+
   const t = await sequelize.transaction();
 
   try {
-    // Actualiza la información del usuario en la tabla Usuarios
-    await Usuarios.update(
-      {
-        nombre,
-        apellido_p,
-        apellido_m,
-        telefono_usuario,
-        email_usuario,
-        password,
-      },
-      { where: { usuario_id: id }, transaction: t }
-    );
+    const usuario = await Usuarios.findByPk(id);
+    usuario.nombre = nombre;
+    usuario.apellido_p = apellido_p;
+    usuario.apellido_m = apellido_m;
+    usuario.curp = curp;
+    usuario.telefono_usuario = telefono_usuario;
+    usuario.email_usuario = email_usuario;
+    usuario.password = password;
+    await usuario.save({ transaction: t });
 
-    // Determina en qué tabla hacer la actualización según el tipo de usuario
     if (req.body.esEgresado) {
-      // Es un egresado, entonces actualiza en la tabla Egresado
-      await Egresado.update(
-        {
-          cod_egresado: matricula,
-        },
-        { where: { usuario_id: id }, transaction: t }
-      );
+      const egresado = await Egresado.findOne({ where: { usuario_id: id } });
+      egresado.cod_egresado = matricula;
+      await egresado.save({ transaction: t });
     } else {
       // No es egresado, entonces actualiza en la tabla Alumno
-      await Alumno.update(
-        {
-          matricula,
-        },
-        { where: { usuario_id: id }, transaction: t }
-      );
+      const alumno = await Alumno.findOne({ where: { usuario_id: id } });
+      alumno.matricula = matricula;
+      await alumno.save({ transaction: t });
     }
 
     await t.commit();
@@ -574,7 +594,7 @@ const getDocentes = async (req, res) => {
 
     res.json(usuarios);
   } catch (error) {
-    console.error("Error al obtener alumnos:", error);
+    console.error("Error al obtener docentes:", error);
     res.status(500).send("Error interno del servidor");
   }
 };

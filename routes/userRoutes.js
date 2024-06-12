@@ -67,7 +67,7 @@ router.delete(
 
 // ALUMNOS
 router.get(
-  "/alumnos",
+  "/alumnos/:id",
   authMiddleware,
   verificarRol(["Administrador"]),
   getAlumnos
