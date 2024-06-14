@@ -1,7 +1,10 @@
 import { Usuarios, UserPreregister } from "../models/Usuarios.js";
 import { Carreras } from "../models/Carreras.js";
 import { CursoPeriodos, Periodos } from "../models/Periodo.js";
-import { sendEmailPreregister, sendEmailRecuperarContrasena } from "../emails/authEmailService.js";
+import {
+  sendEmailPreregister,
+  sendEmailRecuperarContrasena,
+} from "../emails/authEmailService.js";
 import {
   handleNotFoundError,
   handleInternalServerError,
@@ -95,7 +98,11 @@ const preregistro = async (req, res) => {
     }
 
     const user = await UserPreregister.create(datosPreregistro);
-    await sendEmailPreregister(datosPreregistro.email_usuario);
+    await sendEmailPreregister(
+      datosPreregistro.email_usuario,
+      datosPreregistro.nombres,
+      datosPreregistro.apellidos
+    );
     res.json({
       msg: "El preregistro se creó correctamente, espera un correo del administrador",
     });
@@ -140,10 +147,10 @@ const user = async (req, res) => {
 
 const recuperarcontrasena = async (req, res) => {
   const { email_usuario } = req.body;
-  
+
   try {
     const user = await Usuarios.findOne({ where: { email_usuario } });
-    
+
     if (!user) {
       return handleNotFoundError("El Usuario no existe", res);
     }
@@ -196,7 +203,7 @@ const updateContrasena = async (req, res) => {
     const { password } = req.body;
 
     // Actualizar el token y la contraseña del usuario
-    user.token = '';
+    user.token = "";
     user.password = password;
 
     // Guardar los cambios en la base de datos
@@ -204,14 +211,13 @@ const updateContrasena = async (req, res) => {
 
     // Responder con un mensaje de éxito
     return res.json({
-      msg: 'Contraseña modificada correctamente'
+      msg: "Contraseña modificada correctamente",
     });
   } catch (error) {
     // Manejar cualquier error
     return handleInternalServerError(error, res);
   }
 };
-
 
 export {
   login,

@@ -375,8 +375,9 @@ const aceptarDocUsuario = async (req, res) => {
       }
     );
     const email_usuario = Preregistro.email_usuario;
+    const nombre_usuario = Preregistro.nombres;
 
-    await sendEmailAceptado(email_usuario);
+    await sendEmailAceptado(email_usuario, nombre_usuario);
 
     res.json({
       msg: "La operación se realizó correctamente",

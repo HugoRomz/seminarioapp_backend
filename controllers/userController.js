@@ -148,9 +148,6 @@ const aceptarUsuario = async (req, res) => {
     }
     const newUsuario = await Usuarios.create(usuarioNuevo, { transaction: t });
 
-    const { email_usuario } = newUsuario;
-    await sendEmailVerification(email_usuario, password);
-
     const preregisterExist = await UserPreregister.update(
       { status: false },
       {
@@ -217,6 +214,15 @@ const aceptarUsuario = async (req, res) => {
 
     await DocumentosAlumnoEstado.bulkCreate(documentos, { transaction: t });
 
+    const { email_usuario, nombre, apellido_p, apellido_m } = newUsuario;
+    await sendEmailVerification(
+      email_usuario,
+      password,
+      nombre,
+      apellido_p,
+      apellido_m
+    );
+
     await t.commit();
     res.json({
       msg: "El Usuario se creó correctamente",
@@ -237,7 +243,11 @@ const rechazarUsuario = async (req, res) => {
     });
 
     console.log(UserEmail);
-    sendEmailRejection(UserEmail.email_usuario);
+    sendEmailRejection(
+      UserEmail.email_usuario,
+      UserEmail.nombres,
+      UserEmail.apellidos
+    );
 
     await UserPreregister.destroy({
       where: {
