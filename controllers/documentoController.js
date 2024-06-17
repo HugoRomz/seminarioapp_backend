@@ -7,7 +7,8 @@ import {
 } from "../models/Usuarios.js";
 import { Usuarios_Roles } from "../models/Usuarios_Roles.js";
 import { Roles } from "../models/Roles.js";
-
+import { Cursos } from "../models/Cursos.js";
+import { Periodos, CursoPeriodos } from "../models/Periodo.js";
 import {
   sendEmailComentariosDoc,
   sendEmailAceptado,
@@ -33,8 +34,29 @@ const user = async (req, res) => {
   res.json(user);
 };
 
+const getPeriodos = async (req, res) => {
+  try {
+    const periodos = await Periodos.findAll({
+      where: {
+        status: true,
+      },
+    });
+
+    if (periodos && periodos.length > 0) {
+      res.json(periodos);
+    } else {
+      res.status(404).json({ error: "No se encontró ningún periodo" });
+    }
+  } catch (error) {
+    console.error("Error al buscar periodos:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+
 const getAlumnos = async (req, res) => {
   try {
+    const { id } = req.params;
     const usuarios = await Usuarios.findAll({
       include: [
         {
@@ -49,6 +71,17 @@ const getAlumnos = async (req, res) => {
         {
           model: Egresado,
           required: false,
+        },
+        {
+          model: CursoPeriodos,
+          include: [
+            {
+              model: Cursos,
+            },
+          ],
+          where: {
+            periodo_id: id,
+          },
         },
         {
           model: DocumentosAlumnoEstado,
@@ -642,6 +675,7 @@ const subirDocumentosDocente = async (req, res) => {
 
 export {
   user,
+  getPeriodos,
   getAlumnos,
   getCursoDocumentos,
   subirDocumentos,

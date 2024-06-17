@@ -6,6 +6,7 @@ import upload from "../middleware/multer.js";
 import {
   user,
   getAlumnos,
+  getPeriodos,
   getCursoDocumentos,
   subirDocumentos,
   updateDocumentoStatus,
@@ -20,6 +21,13 @@ import {
 } from "../controllers/documentoController.js";
 
 const router = Router();
+
+router.get(
+  "/periodo",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getPeriodos
+);
 
 // Ruta protegida para obtener información del usuario autenticado
 router.get("/user", authMiddleware, user);
@@ -43,7 +51,12 @@ router.put(
   agregarComentarios
 );
 
-router.get("/alumnos", getAlumnos);
+router.get(
+  "/alumnos/:id",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getAlumnos
+);
 
 router.put(
   "/actualizarEstado/:id",
