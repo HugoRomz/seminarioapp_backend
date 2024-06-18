@@ -122,6 +122,7 @@ const aceptarUsuario = async (req, res) => {
     const { apellidoPaterno, apellidoMaterno } = separarApellidos(
       req.body.apellidos
     );
+
     const password = generatePassword();
     const usuarioNuevo = {
       nombre: req.body.nombres,
@@ -132,6 +133,7 @@ const aceptarUsuario = async (req, res) => {
       curp: req.body.curp,
       password: password,
       status: "PENDIENTE",
+      cursos_periodo_id: req.body.cursos_periodo.periodo_id,
     };
     const UserExist = await Usuarios.findOne(
       {
@@ -372,6 +374,9 @@ const getAlumnos = async (req, res) => {
           },
         },
       ],
+      where: {
+        status: "ACTIVO",
+      },
     });
 
     res.json(usuarios);

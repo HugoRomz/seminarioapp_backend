@@ -7,7 +7,9 @@ import {
 } from "../emails/authEmailService.js";
 import {
   handleNotFoundError,
+  handleUnauthorizedError,
   handleInternalServerError,
+  handleConflictError,
   generateJWT,
   handleBadRequestError,
   generateCodEgresado,
@@ -17,13 +19,22 @@ import { Cursos } from "../models/Cursos.js";
 
 const login = async (req, res) => {
   const { email_usuario, password } = req.body;
+  if (!email_usuario || !password) {
+    return handleBadRequestError(
+      "Por favor, introduzca un correo electrónico y una contraseña válidos",
+      res
+    );
+  }
 
   // Verificar usuario
   const user = await Usuarios.findOne({
     where: { email_usuario },
   });
   if (!user) {
-    return handleNotFoundError("El Usuario no existe", res);
+    return handleUnauthorizedError(
+      "Credenciales inválidas. El usuario no existe",
+      res
+    );
   }
 
   // Verificar contraseña
@@ -35,13 +46,16 @@ const login = async (req, res) => {
       token,
     });
   } else {
-    return handleNotFoundError("La contraseña es incorrecta", res);
+    return handleUnauthorizedError(
+      "Credenciales inválidas. Contraseña incorrecta",
+      res
+    );
   }
 };
 
 const preregistro = async (req, res) => {
   if (Object.values(req.body).includes("")) {
-    return handleNotFoundError("Algunos campos están vacíos", res);
+    return handleBadRequestError("Por favor, complete todos los campos", res);
   }
   let datosPreregistro = {};
 
@@ -56,20 +70,15 @@ const preregistro = async (req, res) => {
         carrera: req.body.carrera || "",
         curp: req.body.curp || "",
         egresado: req.body.es_egresado === "Sí" ? true : false,
-
         anio_egreso: req.body.anio_egreso || "",
-
         trabajando: req.body.trabaja_actualmente === "Sí" ? true : false,
         lugar_trabajo: req.body.lugar_trabajo || "",
-
         curso_periodo_id: req.body.seminario || "",
-
         checkSeminario: req.body.ingresar_otro_seminario || false,
       };
     } else {
       datosPreregistro = {
         id_estudiante: req.body.matricula || "",
-
         nombres: req.body.nombres || "",
         apellidos: req.body.apellidos || "",
         telefono: req.body.telefono || "",
@@ -77,11 +86,8 @@ const preregistro = async (req, res) => {
         carrera: req.body.carrera || "",
         curp: req.body.curp || "",
         egresado: req.body.es_egresado === "Sí" ? true : false,
-
         trabajando: req.body.trabaja_actualmente === "Sí" ? true : false,
-
         lugar_trabajo: req.body.lugar_trabajo || "",
-
         curso_periodo_id: req.body.seminario || "",
         checkSeminario: req.body.ingresar_otro_seminario || false,
       };
@@ -89,14 +95,12 @@ const preregistro = async (req, res) => {
     const UserExist = await UserPreregister.findOne({
       where: { curp: datosPreregistro.curp },
     });
-
     if (UserExist) {
-      return handleBadRequestError(
-        "La curp ya se encuentra registrada en el sistema",
+      return handleConflictError(
+        "Ya existe un preregistro con la CURP proporcionada",
         res
       );
     }
-
     const user = await UserPreregister.create(datosPreregistro);
     await sendEmailPreregister(
       datosPreregistro.email_usuario,
@@ -116,7 +120,7 @@ const getCarreras = async (req, res) => {
     const carreras = await Carreras.findAll();
     res.json(carreras);
   } catch (error) {
-    return handleInternalServerError(error, res);
+    return handleNotFoundError("No se encontraron carreras", res);
   }
 };
 
@@ -136,7 +140,7 @@ const getCursosPeriodos = async (req, res) => {
     });
     res.json(cursos);
   } catch (error) {
-    return handleInternalServerError(error, res);
+    return handleNotFoundError("No se encontraron cursos", res);
   }
 };
 
@@ -152,7 +156,7 @@ const recuperarcontrasena = async (req, res) => {
     const user = await Usuarios.findOne({ where: { email_usuario } });
 
     if (!user) {
-      return handleNotFoundError("El Usuario no existe", res);
+      return handleConflictError("El Usuario no existe", res);
     }
 
     const token = UniqueId(user.usuario_id);
@@ -179,7 +183,7 @@ const verificarContrasenaToken = async (req, res) => {
     const validarToken = await Usuarios.findOne({ where: { token } });
 
     if (!validarToken) {
-      return handleNotFoundError("Hubo un error, Token no válido", res);
+      return handleUnauthorizedError("Hubo un error, Token no válido", res);
     }
 
     return res.json({ msg: "Token válido" });
@@ -196,7 +200,7 @@ const updateContrasena = async (req, res) => {
     const user = await Usuarios.findOne({ where: { token } });
 
     if (!user) {
-      return handleNotFoundError("Hubo un error, Token no válido", res);
+      return handleUnauthorizedError("Hubo un error, Token no válido", res);
     }
 
     // Obtener la nueva contraseña del cuerpo de la solicitud

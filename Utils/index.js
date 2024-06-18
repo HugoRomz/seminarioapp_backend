@@ -7,13 +7,6 @@ function handleNotFoundError(message, res) {
   });
 }
 
-function handleInternalServerError(error, res) {
-  console.error("Error interno del servidor:", error);
-  return res.status(500).json({
-    msg: "Error interno del servidor",
-  });
-}
-
 function handleBadRequestError(message, res) {
   const error = new Error(message);
   return res.status(400).json({
@@ -41,10 +34,22 @@ function handleMethodNotAllowedError(message, res) {
     msg: error.message,
   });
 }
+function handleConflictError(message, res) {
+  const error = new Error(message);
+  return res.status(409).json({
+    msg: error.message,
+  });
+}
 
 function handleUnprocessableEntityError(message, res) {
   const error = new Error(message);
   return res.status(422).json({
+    msg: error.message,
+  });
+}
+function handleInternalServerError(message, res) {
+  const error = new Error(message);
+  return res.status(501).json({
     msg: error.message,
   });
 }
@@ -170,6 +175,7 @@ export {
   handleInternalServerError,
   handleBadRequestError,
   handleUnauthorizedError,
+  handleConflictError,
   handleForbiddenError,
   handleMethodNotAllowedError,
   handleUnprocessableEntityError,

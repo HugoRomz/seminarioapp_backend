@@ -107,8 +107,8 @@ export async function sendEmailVerification(
                 </p>
 
                 <p>
-                  Atentamente,<br />Equipo Sistema de Información para la Gestión del
-                  Seminario de Titulación
+                 Atentamente,<br />Coordinación del Seminario de Titulación y Equipo Sistema de Información para la Gestión del
+          Seminario de Titulación
                 </p>
               </div>
               <div class="footer">
@@ -202,7 +202,7 @@ export async function sendEmailRejection(email, nombres, apellidos) {
           información incompleta o criterios de selección específicos.
         </p>
         <p>
-          Atentamente,<br />Equipo Sistema de Información para la Gestión del
+          Atentamente,<br />Coordinación del Seminario de Titulación y Equipo Sistema de Información para la Gestión del
           Seminario de Titulación
         </p>
       </div>
@@ -287,8 +287,7 @@ export async function sendEmailPreregister(email, nombres, apellidos) {
             <div class="content">
                 <h1>¡Hola, ${nombres} ${apellidos}!</h1>
                 <p>
-                Tu preregistro fue un éxito y ahora estás en la espera de ser aceptado
-                como aspirante.
+                Tu preregistro fue un éxito y ahora estás en la espera de ser aceptado.
                 </p>
                 <p>
                 <strong
@@ -302,7 +301,7 @@ export async function sendEmailPreregister(email, nombres, apellidos) {
                 conozcan esta modalidad.
                 </p>
                   <p>
-          Atentamente,<br />Equipo Sistema de Información para la Gestión del
+          Atentamente,<br />Coordinación del Seminario de Titulación y Equipo Sistema de Información para la Gestión del
           Seminario de Titulación
         </p>
             </div>
@@ -405,7 +404,7 @@ export async function sendEmailComentariosDoc(
         </p>
         <p>Por favor, revisa el documento y vuelve a enviarlo para su revisión.</p>
         <p>
-          Atentamente,<br />Equipo Sistema de Información para la Gestión del
+          Atentamente,<br />Coordinación del Seminario de Titulación y Equipo Sistema de Información para la Gestión del
           Seminario de Titulación
         </p>
       </div>
@@ -520,8 +519,8 @@ export async function sendEmailRecuperarContrasena(
               >
               <p>En caso que no hayas sido tú, puedes ignorar este e-mail.</p>
               <p>
-                Atentamente,<br />Equipo Sistema de Información para la Gestión del
-                Seminario de Titulación
+                Atentamente,<br />Coordinación del Seminario de Titulación y Equipo Sistema de Información para la Gestión del
+          Seminario de Titulación
               </p>
             </div>
             <div class="footer">
@@ -623,8 +622,8 @@ export async function sendEmailAceptado(email, nombre_usuario) {
               ponerte en contacto con nosotros.
             </p>
             <p>
-              Atentamente,<br />Equipo Sistema de Información para la Gestión del
-              Seminario de Titulación
+              Atentamente,<br />Coordinación del Seminario de Titulación y Equipo Sistema de Información para la Gestión del
+          Seminario de Titulación
             </p>
           </div>
           <div class="footer">

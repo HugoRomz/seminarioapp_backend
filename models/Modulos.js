@@ -96,7 +96,12 @@ export const Calificaciones = sequelize.define(
     },
     calificacion_final: {
       type: DataTypes.INTEGER,
-      allowNull: false, // Opcional, dependiendo de tus requisitos
+      allowNull: false,
+      validate: {
+        min: 0,
+        max: 10,
+      },
+      defaultValue: 0,
     },
   },
   {
