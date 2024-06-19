@@ -7,9 +7,11 @@ import seminarioRoutes from "./routes/seminarioRoutes.js";
 import catalogoRoutes from "./routes/catalogoRoutes.js";
 import docentesRoutes from "./routes/docentesRoutes.js";
 import alumnoRoutes from "./routes/alumnoRoutes.js";
+import configRouter from "./routes/configRoutes.js";
 import express from "express";
 import colors from "colors";
 import cors from "cors";
+import bodyParser from "body-parser";
 
 import dotenv from "dotenv";
 
@@ -20,6 +22,10 @@ dotenv.config();
 
 // Configurando la app
 const app = express();
+
+// Utilizar mas de 1MB
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
 //Leer datos via body
 app.use(express.json());
@@ -60,6 +66,7 @@ app.use("/v1-api/seminario", seminarioRoutes);
 app.use("/v1-api/catalogo", catalogoRoutes);
 app.use("/v1-api/docentes", docentesRoutes);
 app.use("/v1-api/alumnos", alumnoRoutes);
+app.use("/v1-api/config", configRouter);
 
 // Puerto
 const PORT = process.env.PORT || 4000;
