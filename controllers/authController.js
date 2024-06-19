@@ -1,4 +1,5 @@
 import { Usuarios, UserPreregister } from "../models/Usuarios.js";
+import { Op, literal } from "sequelize";
 import { Carreras } from "../models/Carreras.js";
 import { CursoPeriodos, Periodos } from "../models/Periodo.js";
 import {
@@ -132,11 +133,19 @@ const getCursosPeriodos = async (req, res) => {
           model: Cursos,
         },
         {
+          // Periodos mas cercanos a la fecha actual
           model: Periodos,
-          where: { status: true },
+          where: {
+            status: true,
+            fecha_inicio: {
+              [Op.gte]: literal("CURRENT_DATE"),
+            },
+          },
         },
       ],
-      where: { status: "Pendiente" },
+      where: {
+        status: "Pendiente",
+      },
     });
     res.json(cursos);
   } catch (error) {
