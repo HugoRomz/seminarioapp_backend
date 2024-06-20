@@ -16,16 +16,13 @@ import {
   getAlumnos,
   asignarAlumnos,
   editModulo,
+  generarCalificaciones,
 } from "../controllers/seminarioController.js";
 
 const router = Router();
 
 // PREREGISTROS
-router.get(
-  "/seminarioActivo",
-
-  getSeminarioActivo
-);
+router.get("/seminarioActivo", getSeminarioActivo);
 
 router.put(
   "/rechazarCurso/:idCurso",
@@ -105,6 +102,13 @@ router.put(
   authMiddleware,
   verificarRol(["Administrador"]),
   editModulo
+);
+
+router.get(
+  "/generarCalificaciones/:modulo_id",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  generarCalificaciones
 );
 
 export default router;

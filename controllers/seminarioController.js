@@ -20,6 +20,7 @@ import { Roles } from "../models/Roles.js";
 import { Op } from "sequelize";
 import sequelizet from "sequelize";
 import { sequelize } from "../config/db.js";
+
 import {
   handleNotFoundError,
   handleInternalServerError,
@@ -517,6 +518,153 @@ const editModulo = async (req, res) => {
   }
 };
 
+const generarCalificaciones = async (req, res) => {
+  const { modulo_id } = req.params;
+  try {
+    const calificaciones = await Calificaciones.findAll({
+      include: [
+        {
+          model: Modulos,
+          attributes: [],
+          where: {
+            modulo_id,
+          },
+        },
+        {
+          model: Usuarios,
+          attributes: ["nombre", "apellido_p", "apellido_m"],
+          include: [
+            {
+              model: Alumno,
+              attributes: ["matricula"],
+              required: false,
+            },
+            {
+              model: Egresado,
+              attributes: ["cod_egresado"],
+              required: false,
+            },
+          ],
+        },
+      ],
+    });
+
+    const calificacionesFormateadas = calificaciones.map((calificacion) => {
+      return {
+        nombre: `${calificacion.usuario.nombre} ${calificacion.usuario.apellido_p} ${calificacion.usuario.apellido_m}`,
+        matricula: calificacion.usuario.alumno
+          ? calificacion.usuario.alumno.matricula
+          : calificacion.usuario.egresado.cod_egresado,
+        cal_mod: calificacion.calificacion,
+        proy_cal: calificacion.calificacion_proyecto,
+        cal_fin: calificacion.calificacion_final,
+      };
+    });
+
+    res.json(calificacionesFormateadas);
+
+    if (calificacionesFormateadas.length === 0) {
+      return handleBadRequestError("No se encontraron calificaciones", res);
+    }
+  } catch (error) {
+    return handleInternalServerError(error, res);
+  }
+};
+
+// const generatePDFCalificaciones = async (res, calificaciones) => {
+//   const doc = new PDFDocument({ bufferPages: true, margin: 30 });
+
+//   const filename = `CalificacionModulo.pdf`;
+
+//   const stream = res.writeHead(200, {
+//     "Content-Type": "application/pdf",
+//     "Content-Disposition": `attachment; filename=${filename}`,
+//   });
+
+//   doc.on("data", (data) => {
+//     stream.write(data);
+//   });
+
+//   doc.on("end", () => {
+//     stream.end();
+//   });
+
+//   const tableOptions = {
+//     padding: 5,
+//     prepareHeader: () => {
+//       doc.font("Helvetica-Bold").fontSize(8);
+//     },
+//     hideHeader: false, // Make sure hideHeader is set to true
+//     prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
+//       doc.font("Helvetica").fontSize(11);
+//       let { x, y, width, height } = rectCell;
+//       doc.moveDown(3); //use this incase you encounter any overflow.
+//       doc
+//         .lineWidth(0.5)
+//         .moveTo(x, y)
+//         .lineTo(x + width, y)
+//         .lineTo(x + width, y + height)
+//         .lineTo(x, y + height)
+//         .lineTo(x, y)
+//         .stroke();
+//     },
+//   };
+//   const tableArray = {
+//     headers: [
+//       { label: "N°", align: "center", width: 20, headerColor: "#ffffff" },
+//       {
+//         label: "Matrícula",
+//         width: 70,
+//         headerColor: "#ffffff",
+//       },
+//       { label: "Nombre", width: 240, headerColor: "#ffffff" },
+//       {
+//         label: "Cal. Mod.",
+//         align: "center",
+//         width: 50,
+//         headerColor: "#ffffff",
+//       },
+//       {
+//         label: "Proy. Cal.",
+//         align: "right",
+//         width: 50,
+//         headerColor: "#ffffff",
+//       },
+//       {
+//         label: "Cal. Fin.",
+//         align: "right",
+//         width: 50,
+//         headerColor: "#ffffff",
+//       },
+//     ],
+//     rows: [
+//       ...calificaciones.map((calificacion, index) => [
+//         index + 1,
+//         calificacion.matricula,
+//         calificacion.nombre,
+//         calificacion.cal_mod,
+//         calificacion.proy_cal,
+//         calificacion.cal_fin,
+//       ]),
+//     ],
+//   };
+
+//   // Calculando la posición x para centrar el encabezado
+//   const pageWidth = doc.page.width;
+//   const tableWidth = tableArray.headers.reduce(
+//     (acc, header) => acc + header.width,
+//     0
+//   );
+//   const xPosition = (pageWidth - tableWidth) / 2;
+
+//   await doc.table(tableArray, {
+//     ...tableOptions,
+//     x: xPosition, // Centra el encabezado horizontalmente
+//   });
+
+//   doc.end();
+// };
+
 export {
   getSeminarioActivo,
   rechazarCurso,
@@ -531,4 +679,5 @@ export {
   getAlumnos,
   asignarAlumnos,
   editModulo,
+  generarCalificaciones,
 };
