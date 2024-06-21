@@ -36,7 +36,7 @@ router.get(
 );
 
 // PREREGISTROS
-router.get("/preregister", getPreregister);
+router.get("/preregister/:id", getPreregister);
 router.post(
   "/preregister",
   authMiddleware,
