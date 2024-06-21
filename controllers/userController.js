@@ -57,10 +57,8 @@ const getPeriodos = async (req, res) => {
 
 const getPreregister = async (req, res) => {
   try {
+    const { id } = req.params;
     const usuarios = await UserPreregister.findAll({
-      where: {
-        status: true,
-      },
       include: [
         {
           model: CursoPeriodos,
@@ -69,6 +67,9 @@ const getPreregister = async (req, res) => {
               model: Cursos,
             },
           ],
+          where: {
+            periodo_id: id,
+          },
         },
       ],
     });
