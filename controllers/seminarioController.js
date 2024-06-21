@@ -267,7 +267,14 @@ const getCursoById = async (req, res) => {
         },
         {
           model: Modulos,
-          include: [{ model: Usuarios, include: [{ model: Docente }] }],
+          include: [
+            {
+              model: Usuarios,
+              attributes: ["usuario_id", "nombre", "apellido_p", "apellido_m"],
+
+              include: [{ model: Docente }],
+            },
+          ],
         },
       ],
       order: [[Modulos, "fecha_inicio", "ASC"]],
@@ -525,7 +532,25 @@ const generarCalificaciones = async (req, res) => {
       include: [
         {
           model: Modulos,
-          attributes: [],
+          include: [
+            {
+              model: Usuarios,
+              attributes: ["nombre", "apellido_p", "apellido_m"],
+            },
+            {
+              model: CursoPeriodos,
+              include: [
+                {
+                  model: Periodos,
+                  attributes: ["descripcion"],
+                },
+                {
+                  model: Cursos,
+                  attributes: ["nombre_curso"],
+                },
+              ],
+            },
+          ],
           where: {
             modulo_id,
           },
@@ -549,8 +574,11 @@ const generarCalificaciones = async (req, res) => {
       ],
     });
 
-    const calificacionesFormateadas = calificaciones.map((calificacion) => {
-      return {
+    const calificacionesFormateadas = {
+      docente: `${calificaciones[0].modulo.usuario.nombre} ${calificaciones[0].modulo.usuario.apellido_p} ${calificaciones[0].modulo.usuario.apellido_m}`,
+      curso: calificaciones[0].modulo.cursos_periodo.curso.nombre_curso,
+      periodo: calificaciones[0].modulo.cursos_periodo.periodo.descripcion,
+      calificaciones: calificaciones.map((calificacion) => ({
         nombre: `${calificacion.usuario.nombre} ${calificacion.usuario.apellido_p} ${calificacion.usuario.apellido_m}`,
         matricula: calificacion.usuario.alumno
           ? calificacion.usuario.alumno.matricula
@@ -558,8 +586,8 @@ const generarCalificaciones = async (req, res) => {
         cal_mod: calificacion.calificacion,
         proy_cal: calificacion.calificacion_proyecto,
         cal_fin: calificacion.calificacion_final,
-      };
-    });
+      })),
+    };
 
     res.json(calificacionesFormateadas);
 
@@ -570,100 +598,6 @@ const generarCalificaciones = async (req, res) => {
     return handleInternalServerError(error, res);
   }
 };
-
-// const generatePDFCalificaciones = async (res, calificaciones) => {
-//   const doc = new PDFDocument({ bufferPages: true, margin: 30 });
-
-//   const filename = `CalificacionModulo.pdf`;
-
-//   const stream = res.writeHead(200, {
-//     "Content-Type": "application/pdf",
-//     "Content-Disposition": `attachment; filename=${filename}`,
-//   });
-
-//   doc.on("data", (data) => {
-//     stream.write(data);
-//   });
-
-//   doc.on("end", () => {
-//     stream.end();
-//   });
-
-//   const tableOptions = {
-//     padding: 5,
-//     prepareHeader: () => {
-//       doc.font("Helvetica-Bold").fontSize(8);
-//     },
-//     hideHeader: false, // Make sure hideHeader is set to true
-//     prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
-//       doc.font("Helvetica").fontSize(11);
-//       let { x, y, width, height } = rectCell;
-//       doc.moveDown(3); //use this incase you encounter any overflow.
-//       doc
-//         .lineWidth(0.5)
-//         .moveTo(x, y)
-//         .lineTo(x + width, y)
-//         .lineTo(x + width, y + height)
-//         .lineTo(x, y + height)
-//         .lineTo(x, y)
-//         .stroke();
-//     },
-//   };
-//   const tableArray = {
-//     headers: [
-//       { label: "N°", align: "center", width: 20, headerColor: "#ffffff" },
-//       {
-//         label: "Matrícula",
-//         width: 70,
-//         headerColor: "#ffffff",
-//       },
-//       { label: "Nombre", width: 240, headerColor: "#ffffff" },
-//       {
-//         label: "Cal. Mod.",
-//         align: "center",
-//         width: 50,
-//         headerColor: "#ffffff",
-//       },
-//       {
-//         label: "Proy. Cal.",
-//         align: "right",
-//         width: 50,
-//         headerColor: "#ffffff",
-//       },
-//       {
-//         label: "Cal. Fin.",
-//         align: "right",
-//         width: 50,
-//         headerColor: "#ffffff",
-//       },
-//     ],
-//     rows: [
-//       ...calificaciones.map((calificacion, index) => [
-//         index + 1,
-//         calificacion.matricula,
-//         calificacion.nombre,
-//         calificacion.cal_mod,
-//         calificacion.proy_cal,
-//         calificacion.cal_fin,
-//       ]),
-//     ],
-//   };
-
-//   // Calculando la posición x para centrar el encabezado
-//   const pageWidth = doc.page.width;
-//   const tableWidth = tableArray.headers.reduce(
-//     (acc, header) => acc + header.width,
-//     0
-//   );
-//   const xPosition = (pageWidth - tableWidth) / 2;
-
-//   await doc.table(tableArray, {
-//     ...tableOptions,
-//     x: xPosition, // Centra el encabezado horizontalmente
-//   });
-
-//   doc.end();
-// };
 
 export {
   getSeminarioActivo,
