@@ -94,49 +94,69 @@ const generateJWT = (id) => {
 };
 
 function separarApellidos(apellidoCompleto) {
-  // Lista de prefijos para apellidos compuestos
   const prefijosApellidosCompuestos = [
-    "De La ",
-    "Del ",
-    "De Las ",
-    "De Los ",
-    "De ",
-    "La ",
-    "Las ",
-    "Los ",
-    "San ",
-    "Santa ",
+    "de la ",
+    "del ",
+    "de las ",
+    "de los ",
+    "de ",
+    "la ",
+    "las ",
+    "los ",
+    "san ",
+    "santa ",
   ];
+
   let apellidoPaterno = "";
   let apellidoMaterno = "";
 
-  // Encuentra el último prefijo que coincida en el apellido
-  let ultimoIndexPrefijo = -1;
-  let prefijoSeleccionado = "";
-  prefijosApellidosCompuestos.forEach((prefijo) => {
-    let index = apellidoCompleto.indexOf(prefijo);
-    if (index > ultimoIndexPrefijo && index !== -1) {
-      ultimoIndexPrefijo = index;
-      prefijoSeleccionado = prefijo;
-    }
-  });
+  const apellidoCompletoLower = apellidoCompleto.toLowerCase();
 
-  if (ultimoIndexPrefijo > 0) {
-    // Divide basado en el último prefijo encontrado si no está al inicio
-    apellidoPaterno = apellidoCompleto.substring(0, ultimoIndexPrefijo).trim();
-    apellidoMaterno = apellidoCompleto.substring(ultimoIndexPrefijo).trim();
-  } else if (ultimoIndexPrefijo === 0) {
-    // Maneja caso donde el apellido completo inicia con un prefijo
-    apellidoPaterno = ""; // Considera no tener apellido paterno en este caso específico o ajusta según necesites
-    apellidoMaterno = apellidoCompleto;
-  } else {
-    // Si no hay prefijos, divide por el primer espacio encontrado
-    const partes = apellidoCompleto.split(" ");
-    if (partes.length > 1) {
-      apellidoPaterno = partes[0];
-      apellidoMaterno = partes.slice(1).join(" ");
+  // Encuentra el primer prefijo compuesto al inicio del apellido completo
+  let prefijoInicial = prefijosApellidosCompuestos.find((prefijo) =>
+    apellidoCompletoLower.startsWith(prefijo)
+  );
+
+  if (prefijoInicial) {
+    // Si hay un prefijo inicial, busca el siguiente espacio después del prefijo para dividir los apellidos
+    const resto = apellidoCompleto.slice(prefijoInicial.length).trim();
+    const espacioIndex = resto.indexOf(" ");
+    if (espacioIndex !== -1) {
+      apellidoPaterno = apellidoCompleto
+        .slice(0, prefijoInicial.length + espacioIndex)
+        .trim();
+      apellidoMaterno = resto.slice(espacioIndex + 1).trim();
     } else {
-      apellidoPaterno = apellidoCompleto; // Si solo hay una palabra, se considera como apellido paterno
+      apellidoPaterno = apellidoCompleto;
+    }
+  } else {
+    // Encuentra el último prefijo que coincida en el apellido
+    let ultimoIndexPrefijo = -1;
+    let prefijoSeleccionado = "";
+    prefijosApellidosCompuestos.forEach((prefijo) => {
+      let index = apellidoCompletoLower.indexOf(prefijo);
+      if (index > ultimoIndexPrefijo && index !== -1) {
+        ultimoIndexPrefijo = index;
+        prefijoSeleccionado = prefijo;
+      }
+    });
+
+    if (ultimoIndexPrefijo > 0) {
+      apellidoPaterno = apellidoCompleto
+        .substring(0, ultimoIndexPrefijo)
+        .trim();
+      apellidoMaterno = apellidoCompleto.substring(ultimoIndexPrefijo).trim();
+    } else if (ultimoIndexPrefijo === 0) {
+      apellidoPaterno = "";
+      apellidoMaterno = apellidoCompleto;
+    } else {
+      const partes = apellidoCompleto.split(" ");
+      if (partes.length > 1) {
+        apellidoPaterno = partes[0];
+        apellidoMaterno = partes.slice(1).join(" ");
+      } else {
+        apellidoPaterno = apellidoCompleto;
+      }
     }
   }
 
@@ -160,7 +180,7 @@ function generatePassword() {
 
 function generateCodEgresado() {
   const caracteres = "0123456789";
-  let codEgresado = "";
+  let codEgresado = "E-";
 
   for (let i = 0; i < 7; i++) {
     const indiceAleatorio = Math.floor(Math.random() * caracteres.length);
