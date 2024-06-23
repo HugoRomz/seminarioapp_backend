@@ -17,7 +17,7 @@ import {
   DocumentosDocenteEstado,
 } from "../models/Documentos.js";
 import { Roles } from "../models/Roles.js";
-import { Op } from "sequelize";
+import { Op, where } from "sequelize";
 import sequelizet from "sequelize";
 import { sequelize } from "../config/db.js";
 
@@ -47,33 +47,13 @@ const getSeminarioActivo = async (req, res) => {
           where: { curso_periodo_id: cp.curso_periodo_id },
         });
         cp.dataValues.preregistrosCount = preregistrosCount;
+
+        const usuariosCount = await Usuarios.count({
+          where: { curso_periodo_id: cp.curso_periodo_id },
+        });
+        cp.dataValues.usuariosCount = usuariosCount;
       }
 
-      const aspirantes = await Usuarios.count({
-        include: [
-          {
-            model: Alumno,
-            required: false,
-          },
-          {
-            model: Egresado,
-            required: false,
-          },
-          {
-            model: Roles,
-            where: {
-              nombre_rol: "Alumno",
-            },
-          },
-        ],
-        where: {
-          status: "ACTIVO",
-        },
-      });
-      //AGREGAR ASPIRANTES AL CURSOPERIODO
-      for (const cp of cursoperiodo) {
-        cp.dataValues.aspirantes = aspirantes;
-      }
       res.json(cursoperiodo);
     } else {
       console.log("No hay nada");
@@ -413,6 +393,9 @@ const aceptarCurso = async (req, res) => {
 };
 
 const getAlumnos = async (req, res) => {
+  const { cursoId } = req.params;
+  console.log("cursoId", cursoId);
+
   try {
     const alumnos = await Usuarios.findAll({
       attributes: ["usuario_id", "nombre", "apellido_p", "apellido_m"],
@@ -433,6 +416,7 @@ const getAlumnos = async (req, res) => {
         },
       ],
       where: {
+        curso_periodo_id: cursoId,
         status: "ACTIVO",
         usuario_id: {
           [Op.notIn]: sequelize.literal(`
@@ -526,77 +510,111 @@ const editModulo = async (req, res) => {
 };
 
 const generarCalificaciones = async (req, res) => {
-  const { modulo_id } = req.params;
-  try {
-    const calificaciones = await Calificaciones.findAll({
-      include: [
-        {
-          model: Modulos,
-          include: [
-            {
-              model: Usuarios,
-              attributes: ["nombre", "apellido_p", "apellido_m"],
+  if (!req.params.modulo_id) {
+    return handleBadRequestError("No hay modulos", res);
+  } else {
+    const { modulo_id } = req.params;
+
+    try {
+      const calificaciones = await Calificaciones.findAll({
+        include: [
+          {
+            model: Modulos,
+            include: [
+              {
+                model: Usuarios,
+                attributes: ["nombre", "apellido_p", "apellido_m"],
+              },
+              {
+                model: CursoPeriodos,
+                include: [
+                  {
+                    model: Periodos,
+                    attributes: ["descripcion"],
+                  },
+                  {
+                    model: Cursos,
+                    attributes: ["nombre_curso"],
+                  },
+                ],
+              },
+            ],
+            where: {
+              modulo_id,
             },
-            {
-              model: CursoPeriodos,
-              include: [
-                {
-                  model: Periodos,
-                  attributes: ["descripcion"],
-                },
-                {
-                  model: Cursos,
-                  attributes: ["nombre_curso"],
-                },
-              ],
-            },
-          ],
-          where: {
-            modulo_id,
           },
-        },
-        {
-          model: Usuarios,
-          attributes: ["nombre", "apellido_p", "apellido_m"],
-          include: [
-            {
-              model: Alumno,
-              attributes: ["matricula"],
-              required: false,
-            },
-            {
-              model: Egresado,
-              attributes: ["cod_egresado"],
-              required: false,
-            },
-          ],
-        },
-      ],
-    });
+          {
+            model: Usuarios,
+            attributes: ["nombre", "apellido_p", "apellido_m"],
+            include: [
+              {
+                model: Alumno,
+                attributes: ["matricula"],
+                required: false,
+              },
+              {
+                model: Egresado,
+                attributes: ["cod_egresado"],
+                required: false,
+              },
+            ],
+          },
+        ],
+      });
 
-    const calificacionesFormateadas = {
-      docente: `${calificaciones[0].modulo.usuario.nombre} ${calificaciones[0].modulo.usuario.apellido_p} ${calificaciones[0].modulo.usuario.apellido_m}`,
-      curso: calificaciones[0].modulo.cursos_periodo.curso.nombre_curso,
-      periodo: calificaciones[0].modulo.cursos_periodo.periodo.descripcion,
-      calificaciones: calificaciones.map((calificacion) => ({
-        nombre: `${calificacion.usuario.nombre} ${calificacion.usuario.apellido_p} ${calificacion.usuario.apellido_m}`,
-        matricula: calificacion.usuario.alumno
-          ? calificacion.usuario.alumno.matricula
-          : calificacion.usuario.egresado.cod_egresado,
-        cal_mod: calificacion.calificacion,
-        proy_cal: calificacion.calificacion_proyecto,
-        cal_fin: calificacion.calificacion_final,
-      })),
-    };
+      const calificacionesFormateadas = {
+        docente: `${calificaciones[0].modulo.usuario.nombre} ${calificaciones[0].modulo.usuario.apellido_p} ${calificaciones[0].modulo.usuario.apellido_m}`,
+        curso: calificaciones[0].modulo.cursos_periodo.curso.nombre_curso,
+        periodo: calificaciones[0].modulo.cursos_periodo.periodo.descripcion,
+        calificaciones: calificaciones.map((calificacion) => ({
+          nombre: `${calificacion.usuario.nombre} ${calificacion.usuario.apellido_p} ${calificacion.usuario.apellido_m}`,
+          matricula: calificacion.usuario.alumno
+            ? calificacion.usuario.alumno.matricula
+            : calificacion.usuario.egresado.cod_egresado,
+          cal_mod: calificacion.calificacion,
+          proy_cal: calificacion.calificacion_proyecto,
+          cal_fin: calificacion.calificacion_final,
+        })),
+      };
 
-    res.json(calificacionesFormateadas);
+      res.json(calificacionesFormateadas);
 
-    if (calificacionesFormateadas.length === 0) {
-      return handleBadRequestError("No se encontraron calificaciones", res);
+      if (calificacionesFormateadas.length === 0) {
+        return handleBadRequestError("No se encontraron calificaciones", res);
+      }
+    } catch (error) {
+      return handleInternalServerError(error, res);
     }
-  } catch (error) {
-    return handleInternalServerError(error, res);
   }
+};
+
+const obtenerAlumnosConstancias = async (req, res) => {
+  const curso_id = req.params.cursoId;
+
+  const detalleCurso = await Modulos.findOne({
+    include: {
+      model: Calificaciones,
+      include: {
+        model: Usuarios,
+        attributes: ["usuario_id", "nombre", "apellido_p", "apellido_m"],
+        include: [
+          {
+            model: Alumno,
+            attributes: ["matricula"],
+            required: false,
+          },
+          {
+            model: Egresado,
+            attributes: ["cod_egresado"],
+            required: false,
+          },
+        ],
+      },
+    },
+    where: { curso_periodo_id: curso_id },
+  });
+
+  res.json(detalleCurso.calificaciones);
 };
 
 export {
@@ -614,4 +632,5 @@ export {
   asignarAlumnos,
   editModulo,
   generarCalificaciones,
+  obtenerAlumnosConstancias,
 };

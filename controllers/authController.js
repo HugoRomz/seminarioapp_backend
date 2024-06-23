@@ -58,6 +58,7 @@ const preregistro = async (req, res) => {
   if (Object.values(req.body).includes("")) {
     return handleBadRequestError("Por favor, complete todos los campos", res);
   }
+
   let datosPreregistro = {};
 
   try {
@@ -93,15 +94,39 @@ const preregistro = async (req, res) => {
         checkSeminario: req.body.ingresar_otro_seminario || false,
       };
     }
-    const UserExist = await UserPreregister.findOne({
-      where: { curp: datosPreregistro.curp },
+
+    const preregistrosExistentes = await UserPreregister.findAll({
+      where: {
+        curso_periodo_id: datosPreregistro.curso_periodo_id,
+      },
     });
-    if (UserExist) {
-      return handleConflictError(
-        "Ya existe un preregistro con la CURP proporcionada",
-        res
-      );
+
+    for (let preregistro of preregistrosExistentes) {
+      if (preregistro.curp === datosPreregistro.curp) {
+        if (preregistro.email_usuario !== datosPreregistro.email_usuario) {
+          return handleConflictError(
+            "La CURP ya está registrada con otro correo electrónico.",
+            res
+          );
+        }
+        if (
+          preregistro.curso_periodo_id === datosPreregistro.curso_periodo_id
+        ) {
+          return handleConflictError(
+            "Ya existe un preregistro con la misma CURP, Correo Electrónico, y Curso.",
+            res
+          );
+        }
+      } else if (preregistro.email_usuario === datosPreregistro.email_usuario) {
+        if (preregistro.curp !== datosPreregistro.curp) {
+          return handleConflictError(
+            "El correo electrónico ya está registrado con otra CURP.",
+            res
+          );
+        }
+      }
     }
+
     const user = await UserPreregister.create(datosPreregistro);
     await sendEmailPreregister(
       datosPreregistro.email_usuario,

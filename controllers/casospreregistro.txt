@@ -1,0 +1,33 @@
+Casos de Preregistro
+Mismo curp, mismo email_usuario, mismo curso_periodo_id:
+
+Resultado: Conflicto
+Motivo: Ya existe un preregistro con la misma curp, email_usuario, y curso_periodo_id.
+Mismo curp, diferente email_usuario, mismo curso_periodo_id:
+
+Resultado: Conflicto
+Motivo: La curp ya está registrada con otro correo electrónico.
+Diferente curp, mismo email_usuario, mismo curso_periodo_id:
+
+Resultado: Conflicto
+Motivo: El correo electrónico ya está registrado con otra curp.
+Mismo curp, mismo email_usuario, diferente curso_periodo_id:
+
+Resultado: Permitir
+Motivo: Se permite el preregistro porque el periodo del curso es diferente.
+Mismo curp, diferente email_usuario, diferente curso_periodo_id:
+
+Resultado: Conflicto
+Motivo: La curp ya está registrada con otro correo electrónico.
+Diferente curp, mismo email_usuario, diferente curso_periodo_id:
+
+Resultado: Conflicto
+Motivo: El correo electrónico ya está registrado con otra curp.
+Diferente curp, diferente email_usuario, mismo curso_periodo_id:
+
+Resultado: Permitir
+Motivo: No hay conflicto porque ni la curp ni el correo coinciden con los registros existentes para este periodo del curso.
+Diferente curp, diferente email_usuario, diferente curso_periodo_id:
+
+Resultado: Permitir
+Motivo: No hay conflicto porque ni la curp ni el correo coinciden con los registros existentes y el periodo del curso es diferente.

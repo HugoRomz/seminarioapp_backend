@@ -192,7 +192,6 @@ export const UserPreregister = sequelize.define(
     curp: {
       type: DataTypes.STRING(18),
       allowNull: false,
-      unique: true,
     },
     id_estudiante: {
       type: DataTypes.STRING(15),
@@ -255,4 +254,4 @@ export const UserPreregister = sequelize.define(
 
 // Definir la relación con cursos_periodos
 UserPreregister.belongsTo(CursoPeriodos, { foreignKey: "curso_periodo_id" });
-Usuarios.belongsTo(CursoPeriodos, { foreignKey: 'curso_periodo_id' });
+Usuarios.belongsTo(CursoPeriodos, { foreignKey: "curso_periodo_id" });
