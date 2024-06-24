@@ -134,7 +134,7 @@ const aceptarUsuario = async (req, res) => {
       curp: req.body.curp,
       password: password,
       status: "PENDIENTE",
-      cursos_periodo_id: req.body.cursos_periodo.periodo_id,
+      curso_periodo_id: req.body.curso_periodo_id,
     };
     const UserExist = await Usuarios.findOne(
       {

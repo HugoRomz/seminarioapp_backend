@@ -158,7 +158,7 @@ const data = {
   ],
   periodos: [
     {
-      descripcion: "ENERO - MAYO",
+      descripcion: "ENERO - MAYO 2024",
       fecha_inicio: "2024-01-01 00:00:00-06",
       fecha_fin: "2024-05-11 00:00:00-06",
       status: true,
