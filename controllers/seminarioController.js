@@ -430,7 +430,10 @@ const getAlumnos = async (req, res) => {
     if (alumnos && alumnos.length > 0) {
       res.json(alumnos);
     } else {
-      handleBadRequestError("No se encontraron alumnos", res);
+      handleBadRequestError(
+        "No hay alumnos para seleccionar en este curso",
+        res
+      );
     }
   } catch (error) {
     console.error("Error al buscar alumnos:", error);

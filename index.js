@@ -7,6 +7,7 @@ import seminarioRoutes from "./routes/seminarioRoutes.js";
 import catalogoRoutes from "./routes/catalogoRoutes.js";
 import docentesRoutes from "./routes/docentesRoutes.js";
 import alumnoRoutes from "./routes/alumnoRoutes.js";
+import evidenciasRouter from "./routes/evidenciasRoutes.js";
 import configRouter from "./routes/configRoutes.js";
 import express from "express";
 import colors from "colors";
@@ -67,6 +68,7 @@ app.use("/v1-api/catalogo", catalogoRoutes);
 app.use("/v1-api/docentes", docentesRoutes);
 app.use("/v1-api/alumnos", alumnoRoutes);
 app.use("/v1-api/config", configRouter);
+app.use("/v1-api/evidencias", evidenciasRouter);
 
 // Puerto
 const PORT = process.env.PORT || 4000;

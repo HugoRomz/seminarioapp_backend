@@ -6,6 +6,7 @@ import { createAdmin } from "./createAdmin.js";
 import { Documentos } from "../models/Documentos.js";
 import { Periodos } from "../models/Periodo.js";
 import { Usuarios, Docente } from "../models/Usuarios.js";
+import { TipoEvidencias } from "../models/Evidencias.js";
 import { Usuarios_Roles } from "../models/Usuarios_Roles.js";
 
 await sequelize.authenticate();
@@ -218,6 +219,58 @@ const data = {
       doctorado: "Software Engineering",
     },
   ],
+  tipo_evidencias: [
+    {
+      nombre_tipo_ev: "Examen",
+      descripcion:
+        "Evaluación formal diseñada para medir el conocimiento y comprensión del estudiante sobre un tema específico mediante preguntas estructuradas y criterios de evaluación.",
+    },
+    {
+      nombre_tipo_ev: "Tarea",
+      descripcion:
+        "Actividad asignada para ser realizada fuera del horario de clase, con el propósito de practicar y aplicar los conceptos aprendidos en el aula.",
+    },
+    {
+      nombre_tipo_ev: "Proyecto",
+      descripcion:
+        "Trabajo práctico y extenso que implica investigación, diseño, desarrollo y presentación de una solución a un problema o un análisis detallado de un tema específico.",
+    },
+    {
+      nombre_tipo_ev: "Práctica",
+      descripcion:
+        "Actividad práctica diseñada para aplicar y reforzar los conocimientos teóricos adquiridos en clase mediante ejercicios prácticos, simulaciones o experimentos.",
+    },
+    {
+      nombre_tipo_ev: "Investigación",
+      descripcion:
+        "Estudio sistemático y exhaustivo de un tema, utilizando metodologías de investigación para descubrir nuevos conocimientos, validar teorías existentes o resolver problemas específicos.",
+    },
+    {
+      nombre_tipo_ev: "Participación",
+      descripcion:
+        "Involucración activa del estudiante en actividades de clase, debates, discusiones, y colaboración en proyectos grupales para fomentar el aprendizaje interactivo y la comunicación efectiva.",
+    },
+    {
+      nombre_tipo_ev: "Presentación",
+      descripcion:
+        "Exposición oral o multimedia realizada por el estudiante para comunicar resultados de investigación, análisis de casos, o proyectos, desarrollando habilidades de comunicación y presentación.",
+    },
+    {
+      nombre_tipo_ev: "Informe",
+      descripcion:
+        "Documento formal que presenta resultados de investigaciones, análisis detallados, conclusiones o propuestas, siguiendo estructuras académicas y criterios específicos de presentación.",
+    },
+    {
+      nombre_tipo_ev: "Portfolio",
+      descripcion:
+        "Colección organizada de trabajos y proyectos del estudiante que muestra su progreso, logros, y habilidades adquiridas a lo largo del curso o programa educativo.",
+    },
+    {
+      nombre_tipo_ev: "Simulación",
+      descripcion:
+        "Actividad diseñada para recrear situaciones o escenarios del mundo real, permitiendo a los estudiantes practicar decisiones y aplicar conocimientos en un entorno controlado.",
+    },
+  ],
 };
 
 async function seedDBTest() {
@@ -229,6 +282,9 @@ async function seedDBTest() {
       console.log("Las materias fueron ingresadas correctamente");
       await Periodos.bulkCreate(data.periodos, { transaction: t });
       console.log("Los periodos fueron ingresados correctamente");
+      await TipoEvidencias.bulkCreate(data.tipo_evidencias, {
+        transaction: t,
+      });
 
       for (const docente of data.docentes) {
         const user = await Usuarios.create(
