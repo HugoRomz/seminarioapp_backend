@@ -349,6 +349,7 @@ const getAlumnos = async (req, res) => {
     const { id } = req.params;
     // Busca usuarios con el rol de "Alumno", que sabemos tiene el ID 3
     const usuarios = await Usuarios.findAll({
+      attributes: { exclude: ['token'] },
       include: [
         {
           model: Roles,

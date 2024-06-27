@@ -58,6 +58,7 @@ const getAlumnos = async (req, res) => {
   try {
     const { id } = req.params;
     const usuarios = await Usuarios.findAll({
+      attributes: { exclude: ['token','password'] },
       include: [
         {
           model: Roles,
