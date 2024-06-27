@@ -1,5 +1,5 @@
 import { Usuarios } from "../models/Usuarios.js";
-import { Evidencias, TipoEvidencias } from "../models/Evidencias.js";
+import { Actividad, Evidencias, TipoEvidencias } from "../models/Evidencias.js";
 import { Modulos } from "../models/Modulos.js";
 import { Cursos } from "../models/Cursos.js";
 
@@ -14,7 +14,6 @@ import {
 
 const getModulos = async (req, res) => {
   const { id } = req.params;
-  console.log("ID:", id);
   try {
     const modulos = await Modulos.findAll({
       where: {
@@ -39,16 +38,17 @@ const getModulos = async (req, res) => {
           },
         },
         {
-          model: Evidencias,
-          attributes: ["evidencia_id", "nombre_evidencia", "fecha_entrega"],
+          model: Actividad,
+          attributes: [
+            "actividad_id",
+            "nombre_actividad",
+            "descripcion",
+            "fecha_entrega",
+          ],
           include: [
             {
               model: TipoEvidencias,
-              attributes: [
-                "tipo_evidencia_id",
-                "nombre_tipo_ev",
-                "descripcion",
-              ],
+              attributes: ["tipo_evidencia_id", "nombre_tipo_ev"],
             },
           ],
         },
@@ -83,51 +83,115 @@ const getTipoEvidencias = async (req, res) => {
   }
 };
 
-const createEvidencia = async (req, res) => {
-  const { nombre_evidencia, fecha_entrega, tipo_evidencia_id, modulo_id } =
-    req.body;
+const createActividad = async (req, res) => {
+  const {
+    nombre_actividad,
+    fecha_entrega,
+    tipo_evidencia_id,
+    modulo_id,
+    descripcion,
+  } = req.body;
 
   try {
-    const evidencia = await Evidencias.create({
+    const evidencia = await Actividad.create({
       modulo_id,
-      nombre_evidencia,
+      nombre_actividad,
       fecha_entrega,
       tipo_evidencia_id,
+      descripcion,
     });
     res.json({
-      msg: "La evidencia se creó correctamente.",
+      msg: "La actividad se creó correctamente.",
     });
   } catch (error) {
-    console.error("Error al crear la evidencia:", error);
+    console.error("Error al crear la actividad:", error);
     return handleInternalServerError(error, res);
   }
 };
 
-const updateEvidencia = async (req, res) => {
-  const { evidencia_id, nombre_evidencia, fecha_entrega, tipo_evidencia_id } =
-    req.body;
+const updateActividad = async (req, res) => {
+  const {
+    actividad_id,
+    nombre_actividad,
+    fecha_entrega,
+    tipo_evidencia_id,
+    descripcion,
+  } = req.body;
 
   try {
-    const evidencia = await Evidencias.update(
+    const actividad = await Actividad.update(
       {
-        nombre_evidencia,
+        nombre_actividad,
         fecha_entrega,
         tipo_evidencia_id,
+        descripcion,
       },
       {
         where: {
-          evidencia_id,
+          actividad_id,
         },
       }
     );
 
     res.json({
-      msg: "La evidencia se actualizó correctamente.",
+      msg: "La actividad se actualizó correctamente.",
     });
   } catch (error) {
-    console.error("Error al actualizar la evidencia:", error);
+    console.error("Error al actualizar la actividad:", error);
     return handleInternalServerError(error, res);
   }
 };
 
-export { getModulos, getTipoEvidencias, createEvidencia, updateEvidencia };
+const deleteEvidencia = async (req, res) => {
+  const { evidencia_id } = req.params;
+
+  try {
+    const evidencia = await Actividad.destroy({
+      where: {
+        evidencia_id,
+      },
+    });
+
+    res.json({
+      msg: "La evidencia se eliminó correctamente.",
+    });
+  } catch (error) {
+    console.error("Error al eliminar la evidencia:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+const getEvidencias = async (req, res) => {
+  const { actividad_id } = req.params;
+  console.log(actividad_id);
+  try {
+    const evidencias = await Evidencias.findAll({
+      where: {
+        actividad_id,
+      },
+      include: [
+        {
+          model: Actividad,
+          attributes: ["nombre_actividad"],
+        },
+      ],
+    });
+
+    if (!evidencias) {
+      return handleNotFoundError("No se encontraron evidencias", res);
+    }
+
+    res.json(evidencias);
+  } catch (error) {
+    console.error("Error al buscar evidencias:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+export {
+  getModulos,
+  getTipoEvidencias,
+  createActividad,
+  updateActividad,
+  getEvidencias,
+};

@@ -24,10 +24,10 @@ export const TipoEvidencias = sequelize.define(
   }
 );
 
-export const Evidencias = sequelize.define(
-  "evidencias",
+export const Actividad = sequelize.define(
+  "actividades",
   {
-    evidencia_id: {
+    actividad_id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
@@ -48,8 +48,12 @@ export const Evidencias = sequelize.define(
         key: "tipo_evidencia_id",
       },
     },
-    nombre_evidencia: {
+    nombre_actividad: {
       type: DataTypes.STRING(50),
+      allowNull: false,
+    },
+    descripcion: {
+      type: DataTypes.TEXT,
       allowNull: false,
     },
     fecha_entrega: {
@@ -62,23 +66,23 @@ export const Evidencias = sequelize.define(
   }
 );
 
-export const DetalleEvidencias = sequelize.define(
-  "detalle_evidencias",
+export const Evidencias = sequelize.define(
+  "evidencias",
   {
-    cns_detalle_evidencias: {
+    evidencias_id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-    evidencia_id: {
+    actividad_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "evidencias",
-        key: "evidencia_id",
+        model: "actividades",
+        key: "actividad_id",
       },
     },
-    contenido: {
+    descripcion: {
       type: DataTypes.TEXT,
       allowNull: false,
     },
@@ -88,16 +92,16 @@ export const DetalleEvidencias = sequelize.define(
     },
   },
   {
-    timestamps: false,
+    timestamps: true,
   }
 );
 
 // Relaciones
-TipoEvidencias.hasMany(Evidencias, { foreignKey: "tipo_evidencia_id" });
-Evidencias.belongsTo(TipoEvidencias, { foreignKey: "tipo_evidencia_id" });
+TipoEvidencias.hasMany(Actividad, { foreignKey: "tipo_evidencia_id" });
+Actividad.belongsTo(TipoEvidencias, { foreignKey: "tipo_evidencia_id" });
 
-Evidencias.hasMany(DetalleEvidencias, { foreignKey: "evidencia_id" });
-DetalleEvidencias.belongsTo(Evidencias, { foreignKey: "evidencia_id" });
+Actividad.hasMany(Evidencias, { foreignKey: "actividad_id" });
+Evidencias.belongsTo(Actividad, { foreignKey: "actividad_id" });
 
-Modulos.hasMany(Evidencias, { foreignKey: "modulo_id" });
-Evidencias.belongsTo(Modulos, { foreignKey: "modulo_id" });
+Modulos.hasMany(Actividad, { foreignKey: "modulo_id" });
+Actividad.belongsTo(Modulos, { foreignKey: "modulo_id" });

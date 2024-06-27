@@ -5,8 +5,9 @@ import verificarRol from "../middleware/verificarRol.js";
 import {
   getModulos,
   getTipoEvidencias,
-  createEvidencia,
-  updateEvidencia,
+  createActividad,
+  updateActividad,
+  getEvidencias,
 } from "../controllers/evidenciasController.js";
 
 const router = Router();
@@ -24,16 +25,22 @@ router.get(
   getTipoEvidencias
 );
 router.post(
-  "/evidencias",
+  "/actividad",
   authMiddleware,
   verificarRol(["Docente"]),
-  createEvidencia
+  createActividad
 );
 router.put(
-  "/evidencias",
+  "/actividad",
   authMiddleware,
   verificarRol(["Docente"]),
-  updateEvidencia
+  updateActividad
+);
+router.get(
+  "/:actividad_id",
+  authMiddleware,
+  verificarRol(["Docente"]),
+  getEvidencias
 );
 
 export default router;
