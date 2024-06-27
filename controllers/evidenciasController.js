@@ -44,7 +44,11 @@ const getModulos = async (req, res) => {
           include: [
             {
               model: TipoEvidencias,
-              attributes: ["nombre_tipo_ev", "descripcion"],
+              attributes: [
+                "tipo_evidencia_id",
+                "nombre_tipo_ev",
+                "descripcion",
+              ],
             },
           ],
         },
@@ -79,4 +83,51 @@ const getTipoEvidencias = async (req, res) => {
   }
 };
 
-export { getModulos, getTipoEvidencias };
+const createEvidencia = async (req, res) => {
+  const { nombre_evidencia, fecha_entrega, tipo_evidencia_id, modulo_id } =
+    req.body;
+
+  try {
+    const evidencia = await Evidencias.create({
+      modulo_id,
+      nombre_evidencia,
+      fecha_entrega,
+      tipo_evidencia_id,
+    });
+    res.json({
+      msg: "La evidencia se creó correctamente.",
+    });
+  } catch (error) {
+    console.error("Error al crear la evidencia:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+const updateEvidencia = async (req, res) => {
+  const { evidencia_id, nombre_evidencia, fecha_entrega, tipo_evidencia_id } =
+    req.body;
+
+  try {
+    const evidencia = await Evidencias.update(
+      {
+        nombre_evidencia,
+        fecha_entrega,
+        tipo_evidencia_id,
+      },
+      {
+        where: {
+          evidencia_id,
+        },
+      }
+    );
+
+    res.json({
+      msg: "La evidencia se actualizó correctamente.",
+    });
+  } catch (error) {
+    console.error("Error al actualizar la evidencia:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+export { getModulos, getTipoEvidencias, createEvidencia, updateEvidencia };
