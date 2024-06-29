@@ -8,6 +8,8 @@ import {
   createPeriodo,
   getPeriodos,
   getCursos,
+  getModulos,
+  getEvidencias,
   altaCurso,
   getCursoById,
   getMateriasCurso,
@@ -17,7 +19,6 @@ import {
   asignarAlumnos,
   editModulo,
   generarCalificaciones,
-  obtenerAlumnosConstancias,
 } from "../controllers/seminarioController.js";
 
 const router = Router();
@@ -38,12 +39,28 @@ router.get(
   verificarRol(["Administrador"]),
   getPeriodos
 );
+
 router.get(
   "/cursos",
   authMiddleware,
   verificarRol(["Administrador"]),
   getCursos
 );
+
+router.get(
+  "/:actividad_id",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getEvidencias
+);
+
+router.get(
+  "/modulos/:id",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getModulos
+);
+
 router.post(
   "/periodo",
   authMiddleware,
@@ -87,7 +104,7 @@ router.post(
 );
 
 router.get(
-  "/alumnos/:cursoId",
+  "/alumnos",
   authMiddleware,
   verificarRol(["Administrador"]),
   getAlumnos
@@ -110,13 +127,6 @@ router.get(
   authMiddleware,
   verificarRol(["Administrador"]),
   generarCalificaciones
-);
-
-router.get(
-  "/obtenerAlumnosConstancias/:cursoId",
-  authMiddleware,
-  verificarRol(["Administrador"]),
-  obtenerAlumnosConstancias
 );
 
 export default router;
