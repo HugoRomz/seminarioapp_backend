@@ -8,7 +8,11 @@ import {
   createActividad,
   updateActividad,
   getEvidencias,
+  deleteEvidencia,
+  createEvidencia,
+  deleteActividad,
 } from "../controllers/evidenciasController.js";
+import upload from "../middleware/multer.js";
 
 const router = Router();
 
@@ -36,11 +40,31 @@ router.put(
   verificarRol(["Docente"]),
   updateActividad
 );
+router.delete(
+  "/actividad/:actividad_id",
+  authMiddleware,
+  verificarRol(["Docente"]),
+  deleteActividad
+);
 router.get(
   "/:actividad_id",
   authMiddleware,
   verificarRol(["Docente"]),
   getEvidencias
+);
+router.delete(
+  "/evidencia/:evidencia_id",
+  authMiddleware,
+  verificarRol(["Docente"]),
+  deleteEvidencia
+);
+
+router.post(
+  "/evidencia",
+  authMiddleware,
+  verificarRol(["Docente"]),
+  upload.single("documento"),
+  createEvidencia
 );
 
 export default router;

@@ -87,8 +87,12 @@ export const Evidencias = sequelize.define(
       allowNull: false,
     },
     url_evidencia: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.TEXT,
       allowNull: false,
+    },
+    url_evidenciaPublic: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
   },
   {
