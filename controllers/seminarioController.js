@@ -17,7 +17,7 @@ import {
   DocumentosDocenteEstado,
 } from "../models/Documentos.js";
 import { Roles } from "../models/Roles.js";
-import { Op, where } from "sequelize";
+import { Op } from "sequelize";
 import sequelizet from "sequelize";
 import { sequelize } from "../config/db.js";
 
@@ -27,6 +27,7 @@ import {
   generateJWT,
   handleBadRequestError,
 } from "../Utils/index.js";
+import { Evidencias, TipoEvidencias, Actividad } from "../models/Evidencias.js";
 
 const getSeminarioActivo = async (req, res) => {
   try {
@@ -47,13 +48,33 @@ const getSeminarioActivo = async (req, res) => {
           where: { curso_periodo_id: cp.curso_periodo_id },
         });
         cp.dataValues.preregistrosCount = preregistrosCount;
-
-        const usuariosCount = await Usuarios.count({
-          where: { curso_periodo_id: cp.curso_periodo_id },
-        });
-        cp.dataValues.usuariosCount = usuariosCount;
       }
 
+      const aspirantes = await Usuarios.count({
+        include: [
+          {
+            model: Alumno,
+            required: false,
+          },
+          {
+            model: Egresado,
+            required: false,
+          },
+          {
+            model: Roles,
+            where: {
+              nombre_rol: "Alumno",
+            },
+          },
+        ],
+        where: {
+          status: "ACTIVO",
+        },
+      });
+      //AGREGAR ASPIRANTES AL CURSOPERIODO
+      for (const cp of cursoperiodo) {
+        cp.dataValues.aspirantes = aspirantes;
+      }
       res.json(cursoperiodo);
     } else {
       console.log("No hay nada");
@@ -137,6 +158,77 @@ const getCursos = async (req, res) => {
     }
   } catch (error) {
     console.error("Error al buscar cursos:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+const getModulos = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const modulos = await Modulos.findAll({
+      include: [
+        {
+          model: Actividad,
+          include: [
+            {
+              model: TipoEvidencias,
+            },
+            {
+              model: Evidencias,
+            },
+          ],
+        },
+        {
+          model: CursoPeriodos,
+          include: [
+            {
+              model: Periodos,
+            },
+            {
+              model: Cursos,
+            },
+          ],
+          where: {
+            periodo_id: id,
+          },
+        },
+      ],
+    });
+
+    if (modulos && modulos.length > 0) {
+      res.json(modulos);
+    } else {
+      res.status(404).json({ error: "No se encontró ningún módulo" });
+    }
+  } catch (error) {
+    console.error("Error al buscar módulos:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+const getEvidencias = async (req, res) => {
+  const { actividad_id } = req.params;
+  console.log(actividad_id);
+  try {
+    const evidencias = await Evidencias.findAll({
+      where: {
+        actividad_id,
+      },
+      include: [
+        {
+          model: Actividad,
+          attributes: ["nombre_actividad"],
+        },
+      ],
+    });
+
+    if (!evidencias) {
+      return handleNotFoundError("No se encontraron evidencias", res);
+    }
+
+    res.json(evidencias);
+  } catch (error) {
+    console.error("Error al buscar evidencias:", error);
     return handleInternalServerError(error, res);
   }
 };
@@ -247,14 +339,7 @@ const getCursoById = async (req, res) => {
         },
         {
           model: Modulos,
-          include: [
-            {
-              model: Usuarios,
-              attributes: ["usuario_id", "nombre", "apellido_p", "apellido_m"],
-
-              include: [{ model: Docente }],
-            },
-          ],
+          include: [{ model: Usuarios, include: [{ model: Docente }] }],
         },
       ],
       order: [[Modulos, "fecha_inicio", "ASC"]],
@@ -421,7 +506,7 @@ const getAlumnos = async (req, res) => {
         usuario_id: {
           [Op.notIn]: sequelize.literal(`
             (SELECT usuario_id 
-             FROM calificaciones)
+            FROM calificaciones)
           `),
         },
       },
@@ -626,6 +711,8 @@ export {
   createPeriodo,
   getPeriodos,
   getCursos,
+  getModulos,
+  getEvidencias,
   altaCurso,
   getCursoById,
   getMateriasCurso,
