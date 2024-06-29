@@ -2,6 +2,9 @@ import PDFDocument from "pdfkit";
 import { transporter } from "../config/nodemailer.js";
 import { handleInternalServerError } from "../Utils/index.js";
 
+import cloudinary from "cloudinary";
+import e from "express";
+
 const reporteError = async (req, res) => {
   try {
     const { userId, errorLocation, errorDescription, errorCause, errorPhoto } =
@@ -87,4 +90,15 @@ const reporteError = async (req, res) => {
   }
 };
 
-export { reporteError };
+const downloadFile = async (req, res) => {
+  try {
+    const { url } = req.query;
+
+    const absoluteUrl = cloudinary.url(url, { secure: true });
+    res.status(200).json({ message: "Archivo descargado", url: absoluteUrl });
+  } catch (error) {
+    return handleInternalServerError(error, "Error al descargar el archivo.");
+  }
+};
+
+export { reporteError, downloadFile };
