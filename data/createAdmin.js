@@ -6,7 +6,7 @@ export async function createAdmin() {
   try {
     // Verificar si el usuario ya existe en la base de datos
     const existingUser = await Usuarios.findOne({
-      where: { email_usuario: "rosa.aguilar@unach.mx" },
+      where: { email_usuario: "admin@unach.mx" },
     });
     if (existingUser) {
       console.log(
@@ -15,12 +15,12 @@ export async function createAdmin() {
       return;
     }
     const usuario = await Usuarios.create({
-      nombre: "Rosa Isela",
-      apellido_p: "Lopez",
-      apellido_m: "Aguilar",
-      curp: "AULR920123MCHGSL07",
-      telefono_usuario: "9620000000",
-      email_usuario: "rosa.aguilarfalso@unach.mx",
+      nombre: "Admin",
+      apellido_p: "is",
+      apellido_m: "trador",
+      curp: "NULL",
+      telefono_usuario: "0000000000",
+      email_usuario: "admin@unach.mx",
       password: "root",
       status: "ACTIVO",
     });
@@ -28,25 +28,13 @@ export async function createAdmin() {
     const adminRole = await Roles.findOne({
       where: { nombre_rol: "Administrador" },
     });
-    const docenteRole = await Roles.findOne({
-      where: { nombre_rol: "Docente" },
-    });
 
     // Asigna los roles al usuario
     await Usuarios_Roles.bulkCreate([
       { usuarioUsuarioId: usuario.usuario_id, roleRolId: adminRole.rol_id },
-      { usuarioUsuarioId: usuario.usuario_id, roleRolId: docenteRole.rol_id },
     ]);
 
-    await Docente.create({
-      num_plaza: "E0363040000111",
-      licenciatura: "Licenciatura",
-      maestria: "Maestría",
-      doctorado: "Doctorado",
-      usuario_id: usuario.usuario_id,
-    });
-
-    console.log("Usuario creado correctamente.");
+    console.log("Usuario Admin creado correctamente.");
     return usuario;
   } catch (error) {
     console.error("Error al crear el usuario:", error);
