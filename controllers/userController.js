@@ -27,6 +27,8 @@ import {
   DocumentosAlumnoEstado,
 } from "../models/Documentos.js";
 
+import { Op } from "sequelize";
+
 const getUsuarios = async (req, res) => {
   try {
     const usuarios = await Usuarios.findAll();
@@ -245,7 +247,6 @@ const rechazarUsuario = async (req, res) => {
       where: { id: id },
     });
 
-    console.log(UserEmail);
     sendEmailRejection(
       UserEmail.email_usuario,
       UserEmail.nombres,
@@ -349,7 +350,7 @@ const getAlumnos = async (req, res) => {
     const { id } = req.params;
     // Busca usuarios con el rol de "Alumno", que sabemos tiene el ID 3
     const usuarios = await Usuarios.findAll({
-      attributes: { exclude: ['token'] },
+      attributes: { exclude: ["token"] },
       include: [
         {
           model: Roles,
@@ -376,9 +377,9 @@ const getAlumnos = async (req, res) => {
           },
         },
       ],
-      where: {
-        status: "ACTIVO",
-      },
+      // where: {
+      //   status: "ACTIVO",
+      // },
     });
 
     res.json(usuarios);
@@ -595,18 +596,31 @@ const updateAlumnos = async (req, res) => {
 
 const getDocentes = async (req, res) => {
   try {
-    // Busca usuarios con el rol de "Docente", que sabemos tiene el ID 3
     const usuarios = await Usuarios.findAll({
       include: [
         {
           model: Roles,
           where: { nombre_rol: "Docente" },
-          through: { attributes: [] },
+          attributes: [],
         },
         {
           model: Docente,
+          attributes: ["num_plaza"],
         },
       ],
+      attributes: [
+        "usuario_id",
+        "nombre",
+        "curp",
+        "apellido_p",
+        "apellido_m",
+        "email_usuario",
+        "telefono_usuario",
+        "status",
+      ],
+      where: {
+        email_usuario: { [Op.ne]: "admin@unach.mx" },
+      },
     });
 
     res.json(usuarios);
@@ -656,7 +670,6 @@ const insertarDocentes = async (req, res) => {
 
   try {
     const num_plaza = req.body.num_plaza.toUpperCase();
-    console.log(num_plaza);
 
     const usuarioNuevo = {
       nombre: req.body.nombre,
@@ -666,7 +679,7 @@ const insertarDocentes = async (req, res) => {
       telefono_usuario: req.body.telefono_usuario,
       email_usuario: req.body.email_usuario,
       password: req.body.password,
-      status: "PENDIENTE",
+      status: "DISPONIBLE",
     };
 
     const UserExist = await Docente.findOne(
@@ -769,6 +782,29 @@ const updateDocentes = async (req, res) => {
   }
 };
 
+const updateStatusDocente = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    await Usuarios.update(
+      {
+        status: status,
+      },
+      { where: { usuario_id: id } }
+    );
+
+    res.json({
+      msg: "Se cambio el status del docente correctamente",
+    });
+  } catch (error) {
+    console.error("Error al actualizar status:", error);
+    return res
+      .status(500)
+      .json({ error: "Ocurrió un error al actualizar el status" });
+  }
+};
+
 export {
   getUsuarios,
   getPreregister,
@@ -787,4 +823,5 @@ export {
   insertarDocentes,
   updateDocentes,
   getPeriodos,
+  updateStatusDocente,
 };

@@ -53,12 +53,11 @@ const getPeriodos = async (req, res) => {
   }
 };
 
-
 const getAlumnos = async (req, res) => {
   try {
     const { id } = req.params;
     const usuarios = await Usuarios.findAll({
-      attributes: { exclude: ['token','password'] },
+      attributes: { exclude: ["token", "password"] },
       include: [
         {
           model: Roles,
@@ -560,18 +559,6 @@ const aceptarDocUsuarioDocente = async (req, res) => {
     if (!docente) {
       return handleNotFoundError("Docente no encontrado", res);
     }
-
-    // Actualizar el registro del docente con la información adicional
-    await Docente.update(
-      {
-        usuario_id: usuario_id,
-      },
-      {
-        where: {
-          usuario_id: usuario.usuario_id,
-        },
-      }
-    );
 
     // Actualizar el estado del usuario a "ACTIVO"
     await Usuarios.update(
