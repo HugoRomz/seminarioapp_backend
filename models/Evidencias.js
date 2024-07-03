@@ -49,7 +49,7 @@ export const Actividad = sequelize.define(
       },
     },
     nombre_actividad: {
-      type: DataTypes.STRING(50),
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
     descripcion: {
