@@ -48,33 +48,24 @@ const getSeminarioActivo = async (req, res) => {
           where: { curso_periodo_id: cp.curso_periodo_id },
         });
         cp.dataValues.preregistrosCount = preregistrosCount;
-      }
 
-      const aspirantes = await Usuarios.count({
-        include: [
-          {
-            model: Alumno,
-            required: false,
-          },
-          {
-            model: Egresado,
-            required: false,
-          },
-          {
-            model: Roles,
-            where: {
-              nombre_rol: "Alumno",
+        const aspirantes = await Usuarios.count({
+          include: [
+            {
+              model: Roles,
+              where: {
+                nombre_rol: "Alumno",
+              },
             },
+          ],
+          where: {
+            curso_periodo_id: cp.curso_periodo_id,
           },
-        ],
-        where: {
-          status: "ACTIVO",
-        },
-      });
-      //AGREGAR ASPIRANTES AL CURSOPERIODO
-      for (const cp of cursoperiodo) {
+        });
+        console.log(cp.curso_periodo_id, aspirantes);
         cp.dataValues.aspirantes = aspirantes;
       }
+
       res.json(cursoperiodo);
     } else {
       console.log("No hay nada");
@@ -386,6 +377,9 @@ const getDocentes = async (req, res) => {
     const docentes = await Docente.findAll({
       include: {
         model: Usuarios,
+        where: {
+          status: "DISPONIBLE",
+        },
         attributes: ["nombre", "apellido_p", "apellido_m"], // Seleccionar solo el campo 'nombre' del usuario
       },
     });
@@ -416,6 +410,7 @@ const aceptarCurso = async (req, res) => {
     }
 
     const cursos = await CursoPeriodos.findByPk(req.body[0].curso_periodo_id);
+
     const DocumentosDATA = await DetallesDocumentosDocente.findAll({
       where: {
         curso_id: cursos.curso_id,
@@ -465,6 +460,22 @@ const aceptarCurso = async (req, res) => {
         transaction: t,
       }
     );
+
+    for (const curso of req.body) {
+      await Usuarios.update(
+        {
+          curso_periodo_id: curso.curso_periodo_id,
+          status: "PENDIENTE",
+        },
+        {
+          where: {
+            usuario_id: curso.docente[0].id,
+          },
+          transaction: t,
+        }
+      );
+    }
+
     await t.commit();
     res.json({
       msg: "La operación se realizó correctamente",

@@ -48,7 +48,7 @@ router.get(
 );
 
 router.get(
-  "/:actividad_id",
+  "/evidencias/:actividad_id",
   authMiddleware,
   verificarRol(["Administrador"]),
   getEvidencias

@@ -20,6 +20,7 @@ import {
   deleteDocentes,
   insertarDocentes,
   updateDocentes,
+  updateStatusDocente,
 } from "../controllers/userController.js";
 
 const router = Router();
@@ -115,6 +116,13 @@ router.delete(
   authMiddleware,
   verificarRol(["Administrador"]),
   deleteDocentes
+);
+
+router.put(
+  "/docentes/status/:id",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  updateStatusDocente
 );
 
 export default router;
