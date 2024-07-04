@@ -490,8 +490,6 @@ const aceptarCurso = async (req, res) => {
 
 const getAlumnos = async (req, res) => {
   const { cursoId } = req.params;
-  console.log("cursoId", cursoId);
-
   try {
     const alumnos = await Usuarios.findAll({
       attributes: ["usuario_id", "nombre", "apellido_p", "apellido_m"],
