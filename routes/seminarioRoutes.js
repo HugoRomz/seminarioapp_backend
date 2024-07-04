@@ -19,6 +19,7 @@ import {
   asignarAlumnos,
   editModulo,
   generarCalificaciones,
+  obtenerAlumnosConstancias,
 } from "../controllers/seminarioController.js";
 
 const router = Router();
@@ -104,7 +105,7 @@ router.post(
 );
 
 router.get(
-  "/alumnos",
+  "/alumnos/:cursoId",
   authMiddleware,
   verificarRol(["Administrador"]),
   getAlumnos
@@ -127,6 +128,13 @@ router.get(
   authMiddleware,
   verificarRol(["Administrador"]),
   generarCalificaciones
+);
+
+router.get(
+  "/obtenerAlumnosConstancias/:cursoId",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  obtenerAlumnosConstancias
 );
 
 export default router;
