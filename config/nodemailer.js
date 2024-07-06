@@ -28,5 +28,5 @@ export const transporter = createTransport(
   "smtp.gmail.com",
   465,
   "proyectoapp781@gmail.com",
-  "trrf hfun rzkc nsjc"
+  "dbww wzqh ncng ftam"
 );
