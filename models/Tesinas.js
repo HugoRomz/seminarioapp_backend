@@ -23,7 +23,7 @@ export const Invitaciones = sequelize.define(
       allowNull: false,
     },
     usuario_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "usuarios",
@@ -31,7 +31,7 @@ export const Invitaciones = sequelize.define(
       },
     },
     usuario_id_invitado: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "usuarios",
@@ -62,7 +62,7 @@ export const Tesinas = sequelize.define(
     },
     usuario_id_docente: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: "usuarios",
         key: "usuario_id",
@@ -129,7 +129,7 @@ export const Proyectos = sequelize.define(
     },
     descripcion_proyecto: {
       type: DataTypes.TEXT,
-      allowNull,
+      allowNull: false,
     },
     fecha_registro: {
       type: DataTypes.DATE,
