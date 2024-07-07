@@ -9,7 +9,6 @@ import docentesRoutes from "./routes/docentesRoutes.js";
 import alumnoRoutes from "./routes/alumnoRoutes.js";
 import evidenciasRouter from "./routes/evidenciasRoutes.js";
 import configRouter from "./routes/configRoutes.js";
-import googleRouter from "./routes/googleRoutes.js";
 import express from "express";
 import colors from "colors";
 import cors from "cors";
@@ -70,7 +69,6 @@ app.use("/v1-api/docentes", docentesRoutes);
 app.use("/v1-api/alumnos", alumnoRoutes);
 app.use("/v1-api/config", configRouter);
 app.use("/v1-api/evidencias", evidenciasRouter);
-app.use("/v1-api/google", googleRouter);
 
 // Puerto
 const PORT = process.env.PORT || 4000;
