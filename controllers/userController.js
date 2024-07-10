@@ -377,9 +377,9 @@ const getAlumnos = async (req, res) => {
           },
         },
       ],
-      // where: {
-      //   status: "ACTIVO",
-      // },
+      where: {
+        status: "ACTIVO",
+      },
     });
 
     res.json(usuarios);

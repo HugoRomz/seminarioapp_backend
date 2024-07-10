@@ -693,7 +693,13 @@ const obtenerAlumnosConstancias = async (req, res) => {
       model: Calificaciones,
       include: {
         model: Usuarios,
-        attributes: ["usuario_id", "nombre", "apellido_p", "apellido_m"],
+        attributes: [
+          "usuario_id",
+          "nombre",
+          "apellido_p",
+          "apellido_m",
+          "status",
+        ],
         include: [
           {
             model: Alumno,

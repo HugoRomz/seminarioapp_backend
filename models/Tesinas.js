@@ -150,18 +150,42 @@ export const Proyectos = sequelize.define(
 );
 
 // Relaciones
+Usuarios.hasMany(Invitaciones, {
+  foreignKey: "usuario_id",
+  onDelete: "CASCADE",
+});
+Invitaciones.belongsTo(Usuarios, {
+  foreignKey: "usuario_id",
+});
+Usuarios.hasMany(Invitaciones, {
+  foreignKey: "usuario_id_invitado",
+  onDelete: "CASCADE",
+});
+Invitaciones.belongsTo(Usuarios, {
+  foreignKey: "usuario_id_invitado",
+});
 
-Usuarios.hasMany(Invitaciones, { foreignKey: "alumno_id" });
-Usuarios.hasMany(Invitaciones, { foreignKey: "invitado_id" });
+Usuarios.hasMany(Tesinas, {
+  foreignKey: "usuario_id_alumno",
+  onDelete: "CASCADE",
+});
+Usuarios.hasMany(Tesinas, {
+  foreignKey: "usuario_id_docente",
+  onDelete: "CASCADE",
+});
+Tesinas.belongsTo(Usuarios, {
+  foreignKey: "usuario_id_alumno",
+  as: "Alumno",
+});
+Tesinas.belongsTo(Usuarios, {
+  foreignKey: "usuario_id_docente",
+  as: "Docente",
+});
 
-Invitaciones.belongsTo(Usuarios, { as: "Alumno", foreignKey: "alumno_id" });
-Invitaciones.belongsTo(Usuarios, { as: "Invitado", foreignKey: "invitado_id" });
-
-Usuarios.hasMany(Tesinas, { foreignKey: "alumno_id" });
-Usuarios.hasMany(Tesinas, { foreignKey: "asesor_id" });
-
-Tesinas.belongsTo(Usuarios, { as: "Alumno", foreignKey: "alumno_id" });
-Tesinas.belongsTo(Usuarios, { as: "Asesor", foreignKey: "asesor_id" });
-
-Tesinas.hasMany(Proyectos, { foreignKey: "tesina_id" });
-Proyectos.belongsTo(Tesinas, { foreignKey: "tesina_id" });
+Tesinas.hasMany(Proyectos, {
+  foreignKey: "tesina_id",
+  onDelete: "CASCADE",
+});
+Proyectos.belongsTo(Tesinas, {
+  foreignKey: "tesina_id",
+});

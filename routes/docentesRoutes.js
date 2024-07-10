@@ -5,6 +5,7 @@ import verificarRol from "../middleware/verificarRol.js";
 import {
   getModulos,
   updateCalificacion,
+  getAsesorados,
 } from "../controllers/docenteController.js";
 
 const router = Router();
@@ -20,6 +21,13 @@ router.put(
   authMiddleware,
   verificarRol(["Docente"]),
   updateCalificacion
+);
+
+router.get(
+  "/asesorados/:id",
+  authMiddleware,
+  verificarRol(["Docente"]),
+  getAsesorados
 );
 
 export default router;
