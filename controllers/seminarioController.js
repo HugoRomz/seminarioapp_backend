@@ -11,6 +11,8 @@ import {
   Egresado,
 } from "../models/Usuarios.js";
 
+import { Tesinas } from "../models/Tesinas.js";
+
 import {
   DetallesDocumentosDocente,
   Documentos,
@@ -330,7 +332,13 @@ const getCursoById = async (req, res) => {
         },
         {
           model: Modulos,
-          include: [{ model: Usuarios, include: [{ model: Docente }] }],
+          include: [
+            {
+              model: Usuarios,
+              attributes: { exclude: ["token", "password"] },
+              include: [{ model: Docente }],
+            },
+          ],
         },
       ],
       order: [[Modulos, "fecha_inicio", "ASC"]],
@@ -720,6 +728,13 @@ const obtenerAlumnosConstancias = async (req, res) => {
   res.json(detalleCurso.calificaciones);
 };
 
+const obtenerTesinasyProyectos = async (req, res) => {
+  const curso_id = req.params.cursoId;
+  console.log(curso_id);
+  const tesinas = ["tesina", "proyecto"];
+  res.json(tesinas);
+};
+
 export {
   getSeminarioActivo,
   rechazarCurso,
@@ -738,4 +753,5 @@ export {
   editModulo,
   generarCalificaciones,
   obtenerAlumnosConstancias,
+  obtenerTesinasyProyectos,
 };
