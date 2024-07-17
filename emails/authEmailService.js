@@ -29,7 +29,7 @@ export async function sendEmailVerification(
       html: `<html>
         <head>
             <style>
-                 body {
+                body {
                     font-family: Arial, sans-serif;
                     background-color: #f4f4f4;
                     margin: 0;
@@ -276,7 +276,7 @@ export async function sendEmailPreregister(email, nombres, apellidos) {
                 }
             </style>
         </head>
-       <body>
+      <body>
             <div class="container">
             <div class="header">
                 <img
@@ -338,7 +338,7 @@ export async function sendEmailComentariosDoc(
       html: `<html>
         <head>
             <style>
-                 body {
+                body {
         font-family: Arial, sans-serif;
         background-color: #f4f4f4;
         margin: 0;
@@ -643,5 +643,90 @@ export async function sendEmailAceptado(email, nombre_usuario) {
     console.log("Mensaje enviado: %s", info.messageId);
   } catch (error) {
     console.error(`Error al enviar el correo de rechazo: ${error.message}`);
+  }
+}
+
+export async function sendEmailInvitation(invitedEmail, nombreInvitador, nombreTesina, areaTema, reseniaTema) {
+  try {
+    const info = await transporter.sendMail({
+      from: '"Contacto SIGEST " <proyectoapp781@gmail.com>',
+      to: invitedEmail,
+      subject: "SIGEST | Has recibido una invitación a participar en una tesina",
+      html: `<html>
+        <head>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 0;
+                  }
+                  .container {
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #fff;
+                    padding: 20px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                  }
+                  .header img {
+                    width: 100%;
+                    height: auto;
+                  }
+                  .content {
+                    padding: 20px;
+                  }
+                  .footer {
+                    text-align: center;
+                    margin-top: 20px;
+                    font-size: 14px;
+                    color: #aaa;
+                  }
+                  .content h1 {
+                    font-size: 20px;
+                    color: #333;
+                  }
+                  .content p {
+                    font-size: 16px;
+                    color: #555;
+                    line-height: 1.5;
+                  }
+                  .content strong {
+                    color: #333;
+                  }
+            </style>
+        </head>
+        <body>
+          <div class="container">
+              <div class="header">
+                <img src="cid:unach-banner" alt="Universidad Autonoma de Chiapas" />
+              </div>
+              <div class="content">
+                <h1>¡Hola!</h1>
+                <p>Has sido invitado por ${nombreInvitador} a participar en una tesina.</p>
+                <p>Detalles de la tesina:</p>
+                <ul>
+                  <li>Nombre: <strong>${nombreTesina}</strong></li>
+                  <li>Área del tema: <strong>${areaTema}</strong></li>
+                  <li>Reseña del tema: <strong>${reseniaTema}</strong></li>
+                </ul>
+                <p>Por favor, revisa la página de SIGEST para aceptar o rechazar la invitación.</p>
+              </div>
+              <div class="footer">
+                <p>Este es un mensaje automático, por favor no responder.</p>
+              </div>
+            </div>
+        </body>
+        </html>`,
+      attachments: [
+        {
+          filename: "unach-banner.jpg",
+          path: imagePath,
+          cid: "unach-banner",
+        },
+      ],
+    });
+    console.log("Mensaje de invitación enviado a %s: %s", invitedEmail, info.messageId);
+  } catch (error) {
+    console.error(`Error al enviar el correo de invitación: ${error.message}`);
   }
 }
