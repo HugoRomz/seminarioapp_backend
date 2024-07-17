@@ -116,12 +116,65 @@ const acceptInvitation = async (req, res) => {
         invitacion.status = 'ACEPTADO';
         await invitacion.save();
 
-        res.status(200).json({ message: 'Invitación aceptada' });
+        const allAccepted = await Invitaciones.findAll({
+            where: {
+                usuario_id: invitacion.usuario_id,
+                status: 'PENDIENTE'
+            }
+        });
+
+        if (allAccepted.length === 0) {
+
+            const { nombre_tesina, area_tema, resenia_tema, usuario_id } = invitacion;
+
+            const nuevaTesinaInvitador = await Tesinas.create({
+                usuario_id_docente: null,
+                usuario_id_alumno: usuario_id,
+                nombre_tesina: nombre_tesina,
+                area_tesina: area_tema,
+                resenia_tesina: resenia_tema,
+                fecha_registro: new Date(),
+                status: 'PENDIENTE',
+                url_documento: null
+            });
+
+            const invitacionesAceptadas = await Invitaciones.findAll({
+                where: {
+                    usuario_id: usuario_id,
+                    status: 'ACEPTADO'
+                }
+            });
+
+            const tesinasInvitadosPromises = invitacionesAceptadas.map(async (invitacionAceptada) => {
+                const nuevaTesinaInvitado = await Tesinas.create({
+                    usuario_id_docente: null,
+                    usuario_id_alumno: invitacionAceptada.usuario_id_invitado,
+                    nombre_tesina: invitacionAceptada.nombre_tesina,
+                    area_tesina: invitacionAceptada.area_tema,
+                    resenia_tesina: invitacionAceptada.resenia_tema,
+                    fecha_registro: new Date(),
+                    status: 'PENDIENTE',
+                    url_documento: null
+                });
+                return nuevaTesinaInvitado;
+            });
+
+            const tesinasInvitados = await Promise.all(tesinasInvitadosPromises);
+
+            res.status(200).json({ 
+                message: 'Invitación aceptada. Tesinas registradas.', 
+                tesinaInvitador: nuevaTesinaInvitador,
+                tesinasInvitados: tesinasInvitados
+            });
+        } else {
+            res.status(200).json({ message: 'Invitación aceptada. Esperando otras aceptaciones.' });
+        }
     } catch (error) {
         console.error('Error al aceptar la invitación:', error);
         res.status(500).json({ error: 'Error al aceptar la invitación' });
     }
 };
+
 
 const rejectInvitation = async (req, res) => {
     try {
