@@ -156,6 +156,7 @@ Usuarios.hasMany(Invitaciones, {
 });
 Invitaciones.belongsTo(Usuarios, {
   foreignKey: "usuario_id",
+  as: "anfitrion",
 });
 Usuarios.hasMany(Invitaciones, {
   foreignKey: "usuario_id_invitado",
