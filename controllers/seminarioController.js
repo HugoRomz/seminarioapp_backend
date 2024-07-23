@@ -693,39 +693,68 @@ const generarCalificaciones = async (req, res) => {
   }
 };
 
-const obtenerAlumnosConstancias = async (req, res) => {
+const obtenerAlumnosCurso = async (req, res) => {
   const curso_id = req.params.cursoId;
 
-  const detalleCurso = await Modulos.findOne({
-    include: {
-      model: Calificaciones,
-      include: {
-        model: Usuarios,
-        attributes: [
-          "usuario_id",
-          "nombre",
-          "apellido_p",
-          "apellido_m",
-          "status",
-        ],
+  const alumnos = await Usuarios.findAll({
+    attributes: ["usuario_id", "nombre", "apellido_p", "apellido_m", "status"],
+    where: {
+      curso_periodo_id: curso_id,
+      // status: "ACTIVO",
+    },
+    include: [
+      {
+        model: Alumno,
+        required: false,
+        attributes: ["matricula"],
+      },
+      {
+        model: Egresado,
+        required: false,
+        attributes: ["cod_egresado"],
+      },
+      {
+        model: Calificaciones,
+        required: true,
+        attributes: ["calificacion_final"],
         include: [
           {
-            model: Alumno,
-            attributes: ["matricula"],
-            required: false,
-          },
-          {
-            model: Egresado,
-            attributes: ["cod_egresado"],
-            required: false,
+            model: Modulos,
+            required: true,
+            attributes: ["nombre_modulo"],
           },
         ],
       },
-    },
-    where: { curso_periodo_id: curso_id },
+    ],
   });
 
-  res.json(detalleCurso.calificaciones);
+  for (const alumno of alumnos) {
+    if (alumno.alumno) {
+      alumno.dataValues.matricula = alumno.alumno.matricula;
+    } else {
+      alumno.dataValues.matricula = alumno.egresado.cod_egresado;
+    }
+
+    let sum = 0;
+    let count = 0;
+
+    for (const calificacion of alumno.calificaciones) {
+      sum += calificacion.calificacion_final;
+      count++;
+    }
+
+    const promedio = count > 0 ? sum / count : 0;
+    alumno.dataValues.promedioFinal = promedio;
+  }
+
+  res.json(alumnos);
+};
+const obtenerAlumnosConstancias = async (req, res) => {
+  const curso_id = req.params.cursoId;
+
+  console.log(curso_id);
+  console.log("hola 2");
+  // res.json(detalleCurso.calificaciones);
 };
 
 const obtenerTesinasyProyectos = async (req, res) => {
@@ -754,4 +783,5 @@ export {
   generarCalificaciones,
   obtenerAlumnosConstancias,
   obtenerTesinasyProyectos,
+  obtenerAlumnosCurso,
 };

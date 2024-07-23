@@ -21,6 +21,7 @@ import {
   generarCalificaciones,
   obtenerAlumnosConstancias,
   obtenerTesinasyProyectos,
+  obtenerAlumnosCurso,
 } from "../controllers/seminarioController.js";
 
 const router = Router();
@@ -131,6 +132,12 @@ router.get(
   generarCalificaciones
 );
 
+router.get(
+  "/obtenerAlumnosCurso/:cursoId",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  obtenerAlumnosCurso
+);
 router.get(
   "/obtenerAlumnosConstancias/:cursoId",
   authMiddleware,
