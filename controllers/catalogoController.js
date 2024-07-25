@@ -14,6 +14,7 @@ import {
   handleBadRequestError,
 } from "../Utils/index.js";
 import { CursoPeriodos, Periodos } from "../models/Periodo.js";
+import { Roles } from "../models/Roles.js";
 
 const getMaterias = async (req, res) => {
   try {
@@ -177,6 +178,221 @@ const deleteCarreras = async (req, res) => {
   }
 };
 
+const getRoles = async (req, res) => {
+  try {
+    const roles = await Roles.findAll();
+
+    if (roles && roles.length > 0) {
+      res.json(roles);
+    } else {
+      console.log("No hay roles asignadas");
+      res.status(404).json({ error: "No se encontró ningúna materia activa" });
+    }
+  } catch (error) {
+    console.error("Error al buscar roles:", error);
+    return res.status(500).json({ error: "Ocurrió un error al buscar roles" });
+  }
+};
+
+const insertarRol = async (req, res) => {
+  if (Object.values(req.body).includes("")) {
+    return handleNotFoundError("Algunos campos están vacíos", res);
+  }
+
+  try {
+    const { nombre_rol } = req.body;
+
+    const newMateria = await Roles.create({
+      nombre_rol,
+    });
+
+    res.json({
+      msg: "El rol se creo correctamente",
+    });
+  } catch (error) {
+    return handleInternalServerError("Error al crear el Rol", res);
+  }
+};
+
+const updateRol = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre_rol } = req.body;
+
+    await Roles.update(
+      {
+        nombre_rol,
+      },
+      { where: { rol_id: id }, individualHooks: true }
+    );
+
+    res.json({
+      msg: "El rol se editó correctamente",
+    });
+  } catch (error) {
+    console.error("Error al actualizar el rol:", error);
+    return handleInternalServerError("Error al editar rol", res);
+  }
+};
+
+const deleteRol = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await Roles.destroy({
+      where: {
+        rol_id: id,
+      },
+    });
+    res.json({
+      msg: "El rol se elimino correctamente",
+    });
+  } catch (error) {
+    return handleInternalServerError("Error al eliminar el Rol", res);
+  }
+};
+
+const getPeriodos = async (req, res) => {
+  try {
+    const periodos = await Periodos.findAll();
+
+    if (periodos && periodos.length > 0) {
+      res.json(periodos);
+    } else {
+      res.status(404).json({ error: "No se encontró ningúna materia activa" });
+    }
+  } catch (error) {
+    console.error("Error al buscar periodos:", error);
+    return res
+      .status(500)
+      .json({ error: "Ocurrió un error al buscar periodos" });
+  }
+};
+
+const insertarPeriodo = async (req, res) => {
+  try {
+    const { fecha_inicio, fecha_fin } = req.body;
+
+    console.log(fecha_inicio, fecha_fin);
+    console.log(req.body);
+
+    if (!fecha_inicio || !fecha_fin) {
+      return handleBadRequestError("Faltan datos para crear el periodo", res);
+    }
+
+    const obtenerMesAño = (fecha) => {
+      const fechaObj = new Date(fecha);
+      const meses = [
+        "ENERO",
+        "FEBRERO",
+        "MARZO",
+        "ABRIL",
+        "MAYO",
+        "JUNIO",
+        "JULIO",
+        "AGOSTO",
+        "SEPTIEMBRE",
+        "OCTUBRE",
+        "NOVIEMBRE",
+        "DICIEMBRE",
+      ];
+      const mes = meses[fechaObj.getMonth()];
+      const año = fechaObj.getFullYear();
+      return { mes, año };
+    };
+
+    const fechaInicioFormateada = obtenerMesAño(fecha_inicio);
+    const fechaCierreFormateada = obtenerMesAño(fecha_fin);
+
+    const descripcion = `${fechaInicioFormateada.mes} - ${fechaCierreFormateada.mes} ${fechaInicioFormateada.año}`;
+
+    const newPeriodo = await Periodos.create({
+      fecha_inicio: fecha_inicio,
+      fecha_fin: fecha_fin,
+      descripcion,
+      status: true,
+    });
+
+    res.json({
+      msg: `El periodo ${descripcion} se creó correctamente`,
+    });
+  } catch (error) {
+    console.error("Error al crear periodo:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+const updatePeriodo = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fecha_inicio, fecha_fin } = req.body;
+
+    if (!fecha_inicio || !fecha_fin) {
+      return handleBadRequestError("Faltan datos para crear el periodo", res);
+    }
+
+    const obtenerMesAño = (fecha) => {
+      const fechaObj = new Date(fecha);
+      const meses = [
+        "ENERO",
+        "FEBRERO",
+        "MARZO",
+        "ABRIL",
+        "MAYO",
+        "JUNIO",
+        "JULIO",
+        "AGOSTO",
+        "SEPTIEMBRE",
+        "OCTUBRE",
+        "NOVIEMBRE",
+        "DICIEMBRE",
+      ];
+      const mes = meses[fechaObj.getMonth()];
+      const año = fechaObj.getFullYear();
+      return { mes, año };
+    };
+
+    const fechaInicioFormateada = obtenerMesAño(fecha_inicio);
+    const fechaCierreFormateada = obtenerMesAño(fecha_fin);
+
+    const descripcion = `${fechaInicioFormateada.mes} - ${fechaCierreFormateada.mes} ${fechaInicioFormateada.año}`;
+
+    await Periodos.update(
+      {
+        fecha_inicio,
+        fecha_fin,
+        descripcion,
+        status: true,
+      },
+      { where: { periodo_id: id }, individualHooks: true }
+    );
+
+    res.json({
+      msg: `El periodo ${descripcion} se editó correctamente`,
+    });
+  } catch (error) {
+    console.error("Error al actualizar el periodo:", error);
+    return handleInternalServerError("Error al editar periodo", res);
+  }
+};
+
+const deletePeriodo = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await Periodos.destroy({
+      where: {
+        periodo_id: id,
+      },
+    });
+    res.json({
+      msg: "El período se elimino correctamente",
+    });
+  } catch (error) {
+    return handleInternalServerError("Error al eliminar el período", res);
+  }
+};
+
 const getCursos = async (req, res) => {
   try {
     const cursos = await Cursos.findAll({
@@ -300,6 +516,71 @@ const findDocumentos = async (req, res) => {
   }
 };
 
+const insertarDocumento = async (req, res) => {
+  if (Object.values(req.body).includes("")) {
+    return handleNotFoundError("Algunos campos están vacíos", res);
+  }
+
+  try {
+    const { nombre_documento } = req.body;
+    const destinatario = req.body.destinatario[0].code;
+
+    console.log(req.body);
+    console.log(destinatario);
+
+    const newDocumento = await Documentos.create({
+      nombre_documento,
+      destinatario,
+    });
+
+    res.json({
+      msg: "El documento se creo correctamente",
+    });
+  } catch (error) {
+    return handleInternalServerError("Error al crear el documento", res);
+  }
+};
+
+const updateDocumento = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre_documento } = req.body;
+    const destinatario = req.body.destinatario[0].code;
+
+    await Documentos.update(
+      {
+        nombre_documento,
+        destinatario,
+      },
+      { where: { documento_id: id }, individualHooks: true }
+    );
+
+    res.json({
+      msg: "El documento se editó correctamente",
+    });
+  } catch (error) {
+    console.error("Error al actualizar el documento:", error);
+    return handleInternalServerError("Error al editar documento", res);
+  }
+};
+
+const deleteDocumento = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await Documentos.destroy({
+      where: {
+        documento_id: id,
+      },
+    });
+    res.json({
+      msg: "El documento se elimino correctamente",
+    });
+  } catch (error) {
+    return handleInternalServerError("Error al eliminar el documento", res);
+  }
+};
+
 const asignarDocumentos = async (req, res) => {
   try {
     const datos = req.body;
@@ -351,9 +632,20 @@ export {
   insertarCarreras,
   updateCarreras,
   deleteCarreras,
+  getRoles,
+  insertarRol,
+  updateRol,
+  deleteRol,
+  getPeriodos,
+  insertarPeriodo,
+  updatePeriodo,
+  deletePeriodo,
   getCursos,
   insertarCursos,
   updateCursos,
   findDocumentos,
+  insertarDocumento,
+  updateDocumento,
+  deleteDocumento,
   asignarDocumentos,
 };
