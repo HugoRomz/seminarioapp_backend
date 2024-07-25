@@ -11,16 +11,27 @@ import {
   insertarCarreras,
   updateCarreras,
   deleteCarreras,
+  getRoles,
+  insertarRol,
+  updateRol,
+  deleteRol,
+  getPeriodos,
+  insertarPeriodo,
+  updatePeriodo,
+  deletePeriodo,
   getCursos,
   insertarCursos,
   updateCursos,
   findDocumentos,
+  insertarDocumento,
+  updateDocumento,
+  deleteDocumento,
   asignarDocumentos,
 } from "../controllers/catalogoController.js";
 
 const router = Router();
 
-// PREREGISTROS
+// MATERIAS
 router.get(
   "/materias",
   authMiddleware,
@@ -71,6 +82,53 @@ router.delete(
   deleteCarreras
 );
 
+// ROLES
+router.get("/roles", authMiddleware, verificarRol(["Administrador"]), getRoles);
+router.post(
+  "/roles",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  insertarRol
+);
+router.put(
+  "/roles/:id",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  updateRol
+);
+router.delete(
+  "/roles/:id",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  deleteRol
+);
+
+// Periodos
+router.get(
+  "/periodos",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getPeriodos
+);
+router.post(
+  "/periodos",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  insertarPeriodo
+);
+router.put(
+  "/periodos/:id",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  updatePeriodo
+);
+router.delete(
+  "/periodos/:id",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  deletePeriodo
+);
+
 router.get(
   "/cursos",
   authMiddleware,
@@ -96,6 +154,24 @@ router.get(
   authMiddleware,
   verificarRol(["Administrador"]),
   findDocumentos
+);
+router.post(
+  "/documentos",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  insertarDocumento
+);
+router.put(
+  "/documentos/:id",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  updateDocumento
+);
+router.delete(
+  "/documentos/:id",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  deleteDocumento
 );
 
 router.post(
