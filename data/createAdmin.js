@@ -25,14 +25,14 @@ export async function createAdmin() {
       status: "ACTIVO",
     });
 
-    const adminRole = await Roles.findOne({
-      where: { nombre_rol: "SUPERADMIN" },
-    });
+    const roles = await Roles.findAll();
 
-    // Asigna los roles al usuario
-    await Usuarios_Roles.bulkCreate([
-      { usuarioUsuarioId: usuario.usuario_id, roleRolId: adminRole.rol_id },
-    ]);
+    const usuariosRoles = roles.map((role) => ({
+      usuarioUsuarioId: usuario.usuario_id,
+      roleRolId: role.rol_id,
+    }));
+
+    await Usuarios_Roles.bulkCreate(usuariosRoles);
 
     console.log("Usuario Admin creado correctamente.");
     return usuario;
