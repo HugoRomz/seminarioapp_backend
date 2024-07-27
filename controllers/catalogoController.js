@@ -14,9 +14,13 @@ import {
   handleInternalServerError,
   generateJWT,
   handleBadRequestError,
+  generatePassword,
 } from "../Utils/index.js";
 import { CursoPeriodos, Periodos } from "../models/Periodo.js";
 import { Roles } from "../models/Roles.js";
+import { Usuarios } from "../models/Usuarios.js";
+import { Usuarios_Roles } from "../models/Usuarios_Roles.js";
+import { sequelize } from "../config/db.js";
 
 const getMaterias = async (req, res) => {
   try {
@@ -709,6 +713,196 @@ const deleteTipoEvidencia = async (req, res) => {
   }
 };
 
+const getUsuarios = async (req, res) => {
+  try {
+    const usuarios = await Usuarios.findAll({
+      attributes: { exclude: ["password", "token"] },
+      include: [Roles],
+    });
+
+    if (usuarios && usuarios.length > 0) {
+      res.json(usuarios);
+    } else {
+      console.log("No hay usuarios asignadas");
+      res.status(404).json({ error: "No se encontró ningúna materia activa" });
+    }
+  } catch (error) {
+    console.error("Error al buscar usuarios:", error);
+    return res
+      .status(500)
+      .json({ error: "Ocurrió un error al buscar usuarios" });
+  }
+};
+
+const insertarUsuario = async (req, res) => {
+  if (Object.values(req.body).includes("")) {
+    return handleNotFoundError("Algunos campos están vacíos", res);
+  }
+
+  const t = await sequelize.transaction();
+
+  try {
+    const password = generatePassword();
+
+    const usuarioNuevo = {
+      nombre: req.body.nombre,
+      apellido_p: req.body.apellido_p,
+      apellido_m: req.body.apellido_m,
+      telefono_usuario: req.body.telefono_usuario,
+      email_usuario: req.body.email_usuario,
+      curp: req.body.curp,
+      password: password,
+      status: "ACTIVO",
+    };
+
+    const UserExist = await Usuarios.findOne({
+      where: { curp: req.body.curp },
+      transaction: t,
+    });
+
+    if (UserExist) {
+      await t.rollback();
+      return handleNotFoundError("Ya existe un usuario con la misma CURP", res);
+    }
+
+    const newUsuario = await Usuarios.create(usuarioNuevo, { transaction: t });
+
+    const roles = req.body.roles;
+
+    for (let i = 0; i < roles.length; i++) {
+      await Usuarios_Roles.create(
+        {
+          usuarioUsuarioId: newUsuario.usuario_id,
+          roleRolId: roles[i],
+        },
+        { transaction: t }
+      );
+    }
+
+    await t.commit();
+    res.json({
+      msg: "El Usuario se creó correctamente",
+    });
+  } catch (error) {
+    await t.rollback();
+    return handleInternalServerError("Error al crear el usuario", res);
+  }
+};
+const updateUsuario = async (req, res) => {
+  const t = await sequelize.transaction();
+
+  try {
+    const { id } = req.params;
+    const {
+      nombre,
+      apellido_p,
+      apellido_m,
+      telefono_usuario,
+      email_usuario,
+      curp,
+      roles,
+      password,
+      status,
+    } = req.body;
+
+    const usuario = await Usuarios.findByPk(id);
+
+    if (!usuario) {
+      await t.rollback();
+      return handleNotFoundError("El usuario no existe", res);
+    }
+
+    if (curp !== usuario.curp) {
+      const existingUserWithCurp = await Usuarios.findOne({
+        where: { curp },
+      });
+
+      if (existingUserWithCurp) {
+        await t.rollback();
+        return res.status(400).json({
+          msg: "La CURP ya está registrada por otro usuario",
+        });
+      }
+    }
+
+    usuario.nombre = nombre;
+    usuario.apellido_p = apellido_p;
+    usuario.apellido_m = apellido_m;
+    usuario.telefono_usuario = telefono_usuario;
+    usuario.email_usuario = email_usuario;
+    usuario.curp = curp;
+    usuario.status = status;
+
+    if (password) {
+      usuario.password = password;
+    }
+    await usuario.save({ transaction: t });
+
+    // Obtener roles actuales del usuario
+    const currentRoles = await Usuarios_Roles.findAll({
+      where: { usuarioUsuarioId: id },
+      transaction: t,
+    });
+
+    const currentRoleIds = currentRoles.map((role) => role.roleRolId);
+    const newRoleIds = roles;
+
+    // Comparar los roles actuales con los nuevos roles
+    const rolesChanged =
+      currentRoleIds.length !== newRoleIds.length ||
+      !currentRoleIds.every((roleId) => newRoleIds.includes(roleId));
+
+    if (rolesChanged) {
+      console.log("Roles cambiados");
+      await Usuarios_Roles.destroy({
+        where: { usuarioUsuarioId: id },
+        transaction: t,
+      });
+
+      for (let i = 0; i < roles.length; i++) {
+        await Usuarios_Roles.create(
+          {
+            usuarioUsuarioId: id,
+            roleRolId: roles[i],
+          },
+          { transaction: t }
+        );
+      }
+    }
+
+    await t.commit();
+    res.json({
+      msg: "El Usuario se editó correctamente",
+    });
+  } catch (error) {
+    await t.rollback();
+    console.error("Error al actualizar el usuario:", error);
+    return handleInternalServerError("Error al editar usuario", res);
+  }
+};
+
+const deleteUsuario = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await Usuarios.update(
+      {
+        status: "INACTIVO",
+      },
+      { where: { usuario_id: id }, individualHooks: true }
+    );
+
+    res.json({
+      msg: "El usuario se elimino correctamente",
+    });
+  } catch (error) {
+    return handleInternalServerError(
+      "Error al eliminar el tipo de evidencia",
+      res
+    );
+  }
+};
+
 export {
   getCarreras,
   getMaterias,
@@ -738,4 +932,8 @@ export {
   insertarTipoEvidencia,
   updateTipoEvidencia,
   deleteTipoEvidencia,
+  getUsuarios,
+  insertarUsuario,
+  updateUsuario,
+  deleteUsuario,
 };
