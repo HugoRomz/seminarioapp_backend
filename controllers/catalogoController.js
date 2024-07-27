@@ -7,6 +7,8 @@ import {
   DetallesDocumentosDocente,
 } from "../models/Documentos.js";
 
+import { TipoEvidencias } from "../models/Evidencias.js";
+
 import {
   handleNotFoundError,
   handleInternalServerError,
@@ -623,6 +625,90 @@ const asignarDocumentos = async (req, res) => {
   }
 };
 
+const getTipoEvidencias = async (req, res) => {
+  try {
+    const tipoEvidencias = await TipoEvidencias.findAll();
+
+    if (tipoEvidencias && tipoEvidencias.length > 0) {
+      res.json(tipoEvidencias);
+    } else {
+      console.log("No hay tipoEvidencias asignadas");
+      res.status(404).json({ error: "No se encontró ningúna materia activa" });
+    }
+  } catch (error) {
+    console.error("Error al buscar tipoEvidencias:", error);
+    return res
+      .status(500)
+      .json({ error: "Ocurrió un error al buscar tipoEvidencias" });
+  }
+};
+
+const insertarTipoEvidencia = async (req, res) => {
+  if (Object.values(req.body).includes("")) {
+    return handleNotFoundError("Algunos campos están vacíos", res);
+  }
+
+  try {
+    const { nombre_tipo_ev, descripcion } = req.body;
+
+    const newTipoEvidencia = await TipoEvidencias.create({
+      nombre_tipo_ev,
+      descripcion,
+    });
+
+    res.json({
+      msg: "El tipo de evidencia se creo correctamente",
+    });
+  } catch (error) {
+    return handleInternalServerError(
+      "Error al crear el tipo de evidencia",
+      res
+    );
+  }
+};
+
+const updateTipoEvidencia = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre_tipo_ev, descripcion } = req.body;
+
+    await TipoEvidencias.update(
+      {
+        nombre_tipo_ev,
+        descripcion,
+      },
+      { where: { tipo_evidencia_id: id }, individualHooks: true }
+    );
+
+    res.json({
+      msg: "El tipo de evidencia se editó correctamente",
+    });
+  } catch (error) {
+    console.error("Error al actualizar el tipo de evidencia:", error);
+    return handleInternalServerError("Error al editar tipo de evidencia", res);
+  }
+};
+
+const deleteTipoEvidencia = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await TipoEvidencias.destroy({
+      where: {
+        tipo_evidencia_id: id,
+      },
+    });
+    res.json({
+      msg: "El tipo de evidencia se elimino correctamente",
+    });
+  } catch (error) {
+    return handleInternalServerError(
+      "Error al eliminar el tipo de evidencia",
+      res
+    );
+  }
+};
+
 export {
   getCarreras,
   getMaterias,
@@ -648,4 +734,8 @@ export {
   updateDocumento,
   deleteDocumento,
   asignarDocumentos,
+  getTipoEvidencias,
+  insertarTipoEvidencia,
+  updateTipoEvidencia,
+  deleteTipoEvidencia,
 };

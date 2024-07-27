@@ -27,6 +27,10 @@ import {
   updateDocumento,
   deleteDocumento,
   asignarDocumentos,
+  getTipoEvidencias,
+  insertarTipoEvidencia,
+  updateTipoEvidencia,
+  deleteTipoEvidencia,
 } from "../controllers/catalogoController.js";
 
 const router = Router();
@@ -127,6 +131,32 @@ router.delete(
   authMiddleware,
   verificarRol(["Administrador"]),
   deletePeriodo
+);
+
+// TIPO EVIDENCIAS
+router.get(
+  "/tipoEvidencias",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getTipoEvidencias
+);
+router.post(
+  "/tipoEvidencias",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  insertarTipoEvidencia
+);
+router.put(
+  "/tipoEvidencias/:id",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  updateTipoEvidencia
+);
+router.delete(
+  "/tipoEvidencias/:id",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  deleteTipoEvidencia
 );
 
 router.get(
