@@ -26,7 +26,7 @@ export async function createAdmin() {
     });
 
     const adminRole = await Roles.findOne({
-      where: { nombre_rol: "Administrador" },
+      where: { nombre_rol: "SUPERADMIN" },
     });
 
     // Asigna los roles al usuario
