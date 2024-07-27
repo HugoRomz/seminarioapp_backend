@@ -31,6 +31,10 @@ import {
   insertarTipoEvidencia,
   updateTipoEvidencia,
   deleteTipoEvidencia,
+  getUsuarios,
+  insertarUsuario,
+  updateUsuario,
+  deleteUsuario,
 } from "../controllers/catalogoController.js";
 
 const router = Router();
@@ -157,6 +161,32 @@ router.delete(
   authMiddleware,
   verificarRol(["Administrador"]),
   deleteTipoEvidencia
+);
+
+// USUARIOS
+router.get(
+  "/usuarios",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getUsuarios
+);
+router.post(
+  "/usuarios",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  insertarUsuario
+);
+router.put(
+  "/usuarios/:id",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  updateUsuario
+);
+router.delete(
+  "/usuarios/:id",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  deleteUsuario
 );
 
 router.get(

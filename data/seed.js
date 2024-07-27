@@ -13,6 +13,9 @@ await sequelize.authenticate();
 const data = {
   roles: [
     {
+      nombre_rol: "SUPERADMIN",
+    },
+    {
       nombre_rol: "Administrador",
     },
     {
