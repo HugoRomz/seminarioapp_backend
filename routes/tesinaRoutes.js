@@ -9,7 +9,11 @@ import {
     acceptInvitation,
     rejectInvitation,
     createTesina,
-    getTesinasByUser
+    getTesinasByUser,
+    getAllTesinas,
+    acceptTesina,
+    rejectTesinaRegistro,
+    rejectTesinaDocumento,
 } from "../controllers/tesinaController.js";
 
 const router = Router();
@@ -61,6 +65,34 @@ router.get(
     authMiddleware,
     verificarRol(["Alumno"]),
     getTesinasByUser
+);
+
+router.get(
+    "/tesinas",
+    authMiddleware,
+    verificarRol(["Alumno"]),
+    getAllTesinas
+);
+
+router.put(
+    "/aceptar/:tesinaId",
+    authMiddleware,
+    verificarRol(["Administrador"]),
+    acceptTesina
+);
+
+router.delete(
+    "/rechazar/registro/:tesinaId/:motivo",
+    authMiddleware,
+    verificarRol(["Administrador"]),
+    rejectTesinaRegistro
+);
+
+router.put(
+    "/rechazar/documento/:tesinaId/:motivo",
+    authMiddleware,
+    verificarRol(["Administrador"]),
+    rejectTesinaDocumento
 );
 
 export default router;

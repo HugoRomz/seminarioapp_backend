@@ -1,6 +1,6 @@
 import { Usuarios } from "../models/Usuarios.js";
 import { Invitaciones, Tesinas } from "../models/Tesinas.js";
-import { sendEmailInvitation } from "../emails/authEmailService.js";
+import { sendEmailInvitation, sendEmailRejectionRegistro, sendEmailRejectionDocumento } from "../emails/authEmailService.js";
 
 const createInvitation = async (req, res) => {
   try {
@@ -264,6 +264,101 @@ const getTesinasByUser = async (req, res) => {
   }
 };
 
+const getAllTesinas = async (req, res) => {
+  try {
+    const tesinas = await Tesinas.findAll({
+      include: [
+        {
+          model: Usuarios,
+          as: 'Alumno',
+          attributes: ['nombre', 'apellido_p', 'apellido_m', 'curp'],
+        },
+      ],
+    });
+    res.status(200).json(tesinas);
+  } catch (error) {
+    console.error("Error al obtener todas las tesinas:", error);
+    res.status(500).json({ error: "Error al obtener todas las tesinas" });
+  }
+};
+
+const acceptTesina = async (req, res) => {
+  try {
+      const { tesinaId } = req.params;
+
+      const tesina = await Tesinas.findByPk(tesinaId);
+
+      if (!tesina) {
+          return res.status(404).json({ error: "Tesina no encontrada" });
+      }
+
+      tesina.status = "ACEPTADO";
+      await tesina.save();
+
+      res.status(200).json({ message: "Tesina aceptada" });
+  } catch (error) {
+      console.error("Error al aceptar la tesina:", error);
+      res.status(500).json({ error: "Error al aceptar la tesina" });
+  }
+};
+
+// Rechazar el registro de la tesina y eliminarlo
+const rejectTesinaRegistro = async (req, res) => {
+  try {
+    const { tesinaId, motivo } = req.params;
+
+    const tesina = await Tesinas.findByPk(tesinaId);
+
+    if (!tesina) {
+      return res.status(404).json({ error: "Tesina no encontrada" });
+    }
+
+    const usuario = await Usuarios.findByPk(tesina.usuario_id_alumno);
+    if (!usuario) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    await tesina.destroy();
+
+    // Enviar correo al usuario
+    await sendEmailRejectionRegistro(usuario.email_usuario, usuario.nombre, motivo);
+
+    res.status(200).json({ message: "Registro de tesina rechazado y borrado" });
+  } catch (error) {
+    console.error("Error al rechazar el registro de la tesina:", error);
+    res.status(500).json({ error: "Error al rechazar el registro de la tesina" });
+  }
+};
+
+// Rechazar el documento de la tesina pero mantener el registro
+const rejectTesinaDocumento = async (req, res) => {
+  try {
+    const { tesinaId, motivo } = req.params;
+
+    const tesina = await Tesinas.findByPk(tesinaId);
+
+    if (!tesina) {
+      return res.status(404).json({ error: "Tesina no encontrada" });
+    }
+
+    const usuario = await Usuarios.findByPk(tesina.usuario_id_alumno);
+    if (!usuario) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    tesina.url_documento = null;
+    await tesina.save();
+
+    // Enviar correo al usuario
+    await sendEmailRejectionDocumento(usuario.email_usuario, usuario.nombre, motivo);
+
+    res.status(200).json({ message: "Documento de tesina rechazado, pero registro mantenido" });
+  } catch (error) {
+    console.error("Error al rechazar el documento de la tesina:", error);
+    res.status(500).json({ error: "Error al rechazar el documento de la tesina" });
+  }
+};
+
 export {
   createInvitation,
   getUserInvitations,
@@ -272,4 +367,8 @@ export {
   rejectInvitation,
   createTesina,
   getTesinasByUser,
+  getAllTesinas,
+  acceptTesina,
+  rejectTesinaRegistro,
+  rejectTesinaDocumento,
 };
