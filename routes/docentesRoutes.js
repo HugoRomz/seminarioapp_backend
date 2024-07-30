@@ -6,6 +6,8 @@ import {
   getModulos,
   updateCalificacion,
   getAsesorados,
+  aceptarProyecto,
+  rechazarProyecto,
 } from "../controllers/docenteController.js";
 
 const router = Router();
@@ -28,6 +30,20 @@ router.get(
   authMiddleware,
   verificarRol(["Docente"]),
   getAsesorados
+);
+
+router.put(
+  "/aceptarProyecto/:id",
+  authMiddleware,
+  verificarRol(["Docente"]),
+  aceptarProyecto
+);
+
+router.put(
+  "/rechazarProyecto/:id",
+  authMiddleware,
+  verificarRol(["Docente"]),
+  rechazarProyecto
 );
 
 export default router;

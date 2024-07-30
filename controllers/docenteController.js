@@ -113,7 +113,12 @@ const getAsesorados = async (req, res) => {
       where: {
         usuario_id_docente: id,
       },
-      attributes: ["nombre_tesina", "status", "url_documento"],
+      attributes: [
+        "nombre_tesina",
+        "resenia_tesina",
+        "status",
+        "url_documento",
+      ],
       include: [
         {
           model: Usuarios,
@@ -128,40 +133,79 @@ const getAsesorados = async (req, res) => {
         {
           model: Proyectos,
           attributes: [
+            "proyecto_id",
             "nombre_proyecto",
             "descripcion_proyecto",
             "url_documento",
+            "status",
           ],
         },
       ],
     });
 
-    // Agrupa las tesinas por nombre_tesina
-    const agrupadas = tesinas.reduce((acc, tesina) => {
-      const nombre_tesina = tesina.nombre_tesina;
-      if (!acc[nombre_tesina]) {
-        acc[nombre_tesina] = {
-          tesina_id: tesina.tesina_id,
-          nombre_tesina: tesina.nombre_tesina,
-          url_documento: tesina.url_documento,
-          status: tesina.status,
-          Docente: tesina.Docente,
-          Alumnos: [],
-          Proyectos: tesina.proyectos,
-        };
-      }
-      acc[nombre_tesina].Alumnos.push(tesina.Alumno);
-      return acc;
-    }, {});
-
-    // Convertir el objeto agrupado en un array
-    const agrupadasArray = Object.values(agrupadas);
-
-    res.json(agrupadasArray);
+    res.json(tesinas);
   } catch (error) {
     console.error("Error al obtener los asesorados:", error);
     return handleInternalServerError(error, res);
   }
 };
 
-export { getModulos, updateCalificacion, getAsesorados };
+const aceptarProyecto = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const proyecto = await Proyectos.findOne({
+      where: {
+        proyecto_id: id,
+      },
+    });
+    if (!proyecto) {
+      return handleBadRequestError("No se pudo encontrar el proyecto.", res);
+    }
+    proyecto.status = "ACEPTADO";
+    await proyecto.save();
+
+    res.json({
+      msg: "Proyecto aceptado correctamente.",
+    });
+  } catch (error) {
+    console.error("Error al aceptar el proyecto:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+const rechazarProyecto = async (req, res) => {
+  const { proyecto_id, comentario } = req.body;
+
+  console.log(comentario);
+  try {
+    const proyecto = await Proyectos.findOne({
+      where: {
+        proyecto_id,
+      },
+    });
+    if (!proyecto) {
+      return handleBadRequestError("No se pudo encontrar el proyecto.", res);
+    }
+
+    await Proyectos.destroy({
+      where: {
+        proyecto_id,
+      },
+    });
+
+    res.json({
+      msg: "Proyecto rechazado correctamente.",
+    });
+  } catch (error) {
+    console.error("Error al rechazar el proyecto:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+export {
+  getModulos,
+  updateCalificacion,
+  getAsesorados,
+  aceptarProyecto,
+  rechazarProyecto,
+};
