@@ -1,15 +1,17 @@
 import { Usuarios } from "../models/Usuarios.js";
-
 import { Invitaciones, Tesinas } from "../models/Tesinas.js";
-import { sendEmailInvitation, sendEmailRejectionRegistro, sendEmailRejectionDocumento } from "../emails/authEmailService.js";
+import {
+  sendEmailInvitation,
+  sendEmailRejectionRegistro,
+  sendEmailRejectionDocumento,
+} from "../emails/authEmailService.js";
 import { Op } from "sequelize";
-import { Invitaciones, Tesinas, Proyectos } from "../models/Tesinas.js";
-import { sendEmailInvitation } from "../emails/authEmailService.js";
+import { Proyectos } from "../models/Tesinas.js";
+
 import {
   handleNotFoundError,
   handleInternalServerError,
 } from "../Utils/index.js";
-
 
 const createInvitation = async (req, res) => {
   try {
@@ -197,13 +199,20 @@ const acceptInvitation = async (req, res) => {
         where: {
           [Op.or]: [
             { usuario_id: usuario_id },
-            { usuario_id_invitado: { [Op.in]: invitacionesAceptadas.map(inv => inv.usuario_id_invitado) } }
-          ]
-        }
+            {
+              usuario_id_invitado: {
+                [Op.in]: invitacionesAceptadas.map(
+                  (inv) => inv.usuario_id_invitado
+                ),
+              },
+            },
+          ],
+        },
       });
 
       res.status(200).json({
-        message: "Invitación aceptada. Tesinas registradas y invitaciones eliminadas.",
+        message:
+          "Invitación aceptada. Tesinas registradas y invitaciones eliminadas.",
         tesinaInvitador: nuevaTesinaInvitador,
         tesinasInvitados: tesinasInvitados,
       });
@@ -294,15 +303,14 @@ const getTesinasByUser = async (req, res) => {
   }
 };
 
-
 const getAllTesinas = async (req, res) => {
   try {
     const tesinas = await Tesinas.findAll({
       include: [
         {
           model: Usuarios,
-          as: 'Alumno',
-          attributes: ['nombre', 'apellido_p', 'apellido_m', 'curp'],
+          as: "Alumno",
+          attributes: ["nombre", "apellido_p", "apellido_m", "curp"],
         },
       ],
     });
@@ -324,11 +332,13 @@ const acceptTesinasByName = async (req, res) => {
     }
 
     const tesinasToAccept = await Tesinas.findAll({
-      where: { nombre_tesina: tesina.nombre_tesina, status: "PENDIENTE" }
+      where: { nombre_tesina: tesina.nombre_tesina, status: "PENDIENTE" },
     });
 
     if (tesinasToAccept.length === 0) {
-      return res.status(404).json({ error: "No hay tesinas pendientes con ese nombre" });
+      return res
+        .status(404)
+        .json({ error: "No hay tesinas pendientes con ese nombre" });
     }
 
     // Actualizar el estado a "REGISTRADO" y asignar el docente
@@ -349,25 +359,53 @@ const acceptTesinaUrl = async (req, res) => {
   try {
     const { tesinaId } = req.params;
 
+    const tesina = await Tesinas.findByPk(tesinaId);
+
+    if (!tesina) {
+      return res.status(404).json({ error: "Tesina no encontrada" });
+    }
+
+    const tesinasToAccept = await Tesinas.findAll({
+      where: { nombre_tesina: tesina.nombre_tesina, status: "REGISTRADO" },
+    });
+
+    if (tesinasToAccept.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "No hay tesinas registradas con ese nombre" });
+    }
+
+    for (const t of tesinasToAccept) {
+      t.status = "ACEPTADO";
+      await t.save();
+    }
+
+    res.status(200).json({ message: "Tesina aceptada" });
+  } catch (error) {
+    console.error("Error al aceptar la tesina:", error);
+    res.status(500).json({ error: "Error al aceptar la tesina" });
+  }
+};
+
 const updateTesinaURL = async (req, res) => {
   try {
     const { tesinaId } = req.params;
     const { url_documento } = req.body;
 
-
     const tesina = await Tesinas.findByPk(tesinaId);
 
     if (!tesina) {
-
       return res.status(404).json({ error: "Tesina no encontrada" });
     }
 
     const tesinasToAccept = await Tesinas.findAll({
-      where: { nombre_tesina: tesina.nombre_tesina, status: "REGISTRADO" }
+      where: { nombre_tesina: tesina.nombre_tesina, status: "REGISTRADO" },
     });
 
     if (tesinasToAccept.length === 0) {
-      return res.status(404).json({ error: "No hay tesinas registradas con ese nombre" });
+      return res
+        .status(404)
+        .json({ error: "No hay tesinas registradas con ese nombre" });
     }
 
     for (const t of tesinasToAccept) {
@@ -397,18 +435,31 @@ const rejectTesinasByName = async (req, res) => {
       include: [
         {
           model: Usuarios,
-          as: 'Alumno',
-          attributes: ['nombre', 'apellido_p', 'apellido_m', 'curp', 'email_usuario'],
+          as: "Alumno",
+          attributes: [
+            "nombre",
+            "apellido_p",
+            "apellido_m",
+            "curp",
+            "email_usuario",
+          ],
         },
       ],
     });
 
     for (const t of tesinasToReject) {
       try {
-        await sendEmailRejectionRegistro(t.Alumno.email_usuario, t.Alumno.nombre, motivo);
+        await sendEmailRejectionRegistro(
+          t.Alumno.email_usuario,
+          t.Alumno.nombre,
+          motivo
+        );
         await t.destroy();
       } catch (error) {
-        console.error(`Error al enviar el correo de rechazo de registro:`, error);
+        console.error(
+          `Error al enviar el correo de rechazo de registro:`,
+          error
+        );
       }
     }
 
@@ -434,41 +485,41 @@ const rejectTesinaDocumento = async (req, res) => {
       include: [
         {
           model: Usuarios,
-          as: 'Alumno',
-          attributes: ['nombre', 'apellido_p', 'apellido_m', 'curp', 'email_usuario'],
+          as: "Alumno",
+          attributes: [
+            "nombre",
+            "apellido_p",
+            "apellido_m",
+            "curp",
+            "email_usuario",
+          ],
         },
       ],
     });
 
     for (const t of tesinasToReject) {
       try {
-        await sendEmailRejectionDocumento(t.Alumno.email_usuario, t.Alumno.nombre, motivo);
+        await sendEmailRejectionDocumento(
+          t.Alumno.email_usuario,
+          t.Alumno.nombre,
+          motivo
+        );
         t.url_documento = null;
         await t.save();
       } catch (error) {
-        console.error(`Error al enviar el correo de rechazo de documento:`, error);
+        console.error(
+          "Error al enviar el correo de rechazo de documento:",
+          error
+        );
       }
     }
 
     res.status(200).json({ message: "Documento de tesina rechazado" });
   } catch (error) {
     console.error("Error al rechazar el documento de la tesina:", error);
-    res.status(500).json({ error: "Error al rechazar el documento de la tesina" });
-
-      return handleNotFoundError("Tesina no encontrada", res);
-    }
-
-    tesina.url_documento = url_documento;
-    await tesina.save();
-
-    res.json({
-      msg: "URL de la Tesina actualizada con éxito",
-    });
-  } catch (error) {
-    return handleInternalServerError(
-      "Error al actualizar la URL de la Tesina",
-      res
-    );
+    res
+      .status(500)
+      .json({ error: "Error al rechazar el documento de la tesina" });
   }
 };
 
@@ -499,7 +550,6 @@ const saveProyecto = async (req, res) => {
     });
   } catch (error) {
     return handleInternalServerError("Error al guardar el Proyecto", res);
-
   }
 };
 
