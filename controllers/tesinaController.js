@@ -1,7 +1,15 @@
 import { Usuarios } from "../models/Usuarios.js";
+
 import { Invitaciones, Tesinas } from "../models/Tesinas.js";
 import { sendEmailInvitation, sendEmailRejectionRegistro, sendEmailRejectionDocumento } from "../emails/authEmailService.js";
 import { Op } from "sequelize";
+import { Invitaciones, Tesinas, Proyectos } from "../models/Tesinas.js";
+import { sendEmailInvitation } from "../emails/authEmailService.js";
+import {
+  handleNotFoundError,
+  handleInternalServerError,
+} from "../Utils/index.js";
+
 
 const createInvitation = async (req, res) => {
   try {
@@ -257,6 +265,17 @@ const getTesinasByUser = async (req, res) => {
   try {
     const { userId } = req.params;
     const tesinas = await Tesinas.findAll({
+      include: [
+        {
+          model: Usuarios,
+          as: "Docente",
+          attributes: ["nombre", "apellido_p", "apellido_m", "email_usuario"],
+          required: false,
+        },
+        {
+          model: Proyectos,
+        },
+      ],
       where: { usuario_id_alumno: userId },
     });
 
@@ -274,6 +293,7 @@ const getTesinasByUser = async (req, res) => {
       .json({ message: "Error al obtener las tesinas del usuario.", error });
   }
 };
+
 
 const getAllTesinas = async (req, res) => {
   try {
@@ -329,9 +349,16 @@ const acceptTesinaUrl = async (req, res) => {
   try {
     const { tesinaId } = req.params;
 
+const updateTesinaURL = async (req, res) => {
+  try {
+    const { tesinaId } = req.params;
+    const { url_documento } = req.body;
+
+
     const tesina = await Tesinas.findByPk(tesinaId);
 
     if (!tesina) {
+
       return res.status(404).json({ error: "Tesina no encontrada" });
     }
 
@@ -427,6 +454,52 @@ const rejectTesinaDocumento = async (req, res) => {
   } catch (error) {
     console.error("Error al rechazar el documento de la tesina:", error);
     res.status(500).json({ error: "Error al rechazar el documento de la tesina" });
+
+      return handleNotFoundError("Tesina no encontrada", res);
+    }
+
+    tesina.url_documento = url_documento;
+    await tesina.save();
+
+    res.json({
+      msg: "URL de la Tesina actualizada con éxito",
+    });
+  } catch (error) {
+    return handleInternalServerError(
+      "Error al actualizar la URL de la Tesina",
+      res
+    );
+  }
+};
+
+const saveProyecto = async (req, res) => {
+  try {
+    const { tesina_id, nombre_proyecto, descripcion_proyecto, url_documento } =
+      req.body;
+
+    console.log(req.body);
+
+    const tesina = await Tesinas.findByPk(tesina_id);
+
+    if (!tesina) {
+      return handleNotFoundError("Tesina no encontrada", res);
+    }
+
+    const nuevoProyecto = await Proyectos.create({
+      tesina_id: tesina_id,
+      nombre_proyecto: nombre_proyecto,
+      descripcion_proyecto: descripcion_proyecto,
+      fecha_registro: new Date(),
+      url_documento: url_documento,
+      status: "PENDIENTE",
+    });
+
+    res.json({
+      msg: "Proyecto guardado con éxito",
+    });
+  } catch (error) {
+    return handleInternalServerError("Error al guardar el Proyecto", res);
+
   }
 };
 
@@ -443,4 +516,6 @@ export {
   acceptTesinaUrl,
   rejectTesinasByName,
   rejectTesinaDocumento,
+  updateTesinaURL,
+  saveProyecto,
 };
