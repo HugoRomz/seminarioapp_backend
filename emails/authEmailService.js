@@ -730,3 +730,174 @@ export async function sendEmailInvitation(invitedEmail, nombreInvitador, nombreT
     console.error(`Error al enviar el correo de invitación: ${error.message}`);
   }
 }
+
+export async function sendEmailRejectionRegistro(email, nombre, motivo) {
+  try {
+    const info = await transporter.sendMail({
+      from: '"Contacto SIGEST" <proyectoapp781@gmail.com>',
+      to: email,
+      subject: "SIGEST | Tu registro de tesina ha sido rechazado",
+      html: `<html>
+        <head>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 0;
+                  }
+                  .container {
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #fff;
+                    padding: 20px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                  }
+                  .header img {
+                    width: 100%;
+                    height: auto;
+                  }
+                  .content {
+                    padding: 20px;
+                  }
+                  .footer {
+                    text-align: center;
+                    margin-top: 20px;
+                    font-size: 14px;
+                    color: #aaa;
+                  }
+                  .content h1 {
+                    font-size: 20px;
+                    color: #333;
+                  }
+                  .content p {
+                    font-size: 16px;
+                    color: #555;
+                    line-height: 1.5;
+                  }
+                  .content strong {
+                    color: #333;
+                  }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+              <div class="header">
+                <img src="cid:unach-banner" alt="Universidad Autonoma de Chiapas" />
+              </div>
+              <div class="content">
+                <h1>¡Hola, ${nombre}!</h1>
+                <p>Lamentamos informarte que el registro de tu tesina ha sido rechazado.</p>
+                <p>Motivo del rechazo: <strong>${motivo}</strong></p>
+                <p>Por favor, revisa la información proporcionada y vuelve a intentarlo.</p>
+                <p>Atentamente,<br />Coordinación del Seminario de Titulación y Equipo Sistema de Información para la Gestión del Seminario de Titulación</p>
+              </div>
+              <div class="footer">
+                <p>Este es un mensaje automático, por favor no responder.</p>
+              </div>
+            </div>
+        </body>
+        </html>`,
+      attachments: [
+        {
+          filename: "unach-banner.jpg",
+          path: imagePath,
+          cid: "unach-banner",
+        },
+      ],
+    });
+    console.log("Mensaje enviado: %s", info.messageId);
+  } catch (error) {
+    console.error(`Error al enviar el correo de rechazo de registro: ${error.message}`);
+  }
+}
+
+// Función para enviar un correo de rechazo de documento
+export async function sendEmailRejectionDocumento(email, nombre, motivo) {
+  try {
+    const info = await transporter.sendMail({
+      from: '"Contacto SIGEST" <proyectoapp781@gmail.com>',
+      to: email,
+      subject: "SIGEST | El archivo de tu tesina ha sido rechazado",
+      html: `<html>
+        <head>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 0;
+                  }
+                  .container {
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #fff;
+                    padding: 20px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                  }
+                  .header img {
+                    width: 100%;
+                    height: auto;
+                  }
+                  .content {
+                    padding: 20px;
+                  }
+                  .footer {
+                    text-align: center;
+                    margin-top: 20px;
+                    font-size: 14px;
+                    color: #aaa;
+                  }
+                  .content h1 {
+                    font-size: 20px;
+                    color: #333;
+                  }
+                  .content p {
+                    font-size: 16px;
+                    color: #555;
+                    line-height: 1.5;
+                  }
+                  .content strong {
+                    color: #333;
+                  }
+                  .document-name {
+                    font-weight: bold;
+                    color: #5bc0de;
+                  }
+                  .rejection-reason {
+                    font-weight: bold;
+                    color: #d9534f;
+                  }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+              <div class="header">
+                <img src="cid:unach-banner" alt="Universidad Autonoma de Chiapas" />
+              </div>
+              <div class="content">
+                <h1>¡Hola, ${nombre}!</h1>
+                <p>Lamentamos informarte que el archivo de tu tesina ha sido rechazado.</p>
+                <p>Motivo del rechazo: <span class="rejection-reason">${motivo}</span></p>
+                <p>Por favor, revisa el documento y vuelve a enviarlo para su revisión.</p>
+                <p>Atentamente,<br />Coordinación del Seminario de Titulación y Equipo Sistema de Información para la Gestión del Seminario de Titulación</p>
+              </div>
+              <div class="footer">
+                <p>Este es un mensaje automático, por favor no responder.</p>
+              </div>
+            </div>
+        </body>
+        </html>`,
+      attachments: [
+        {
+          filename: "unach-banner.jpg",
+          path: imagePath,
+          cid: "unach-banner",
+        },
+      ],
+    });
+    console.log("Mensaje enviado: %s", info.messageId);
+  } catch (error) {
+    console.error(`Error al enviar el correo de rechazo del documento: ${error.message}`);
+  }
+}
