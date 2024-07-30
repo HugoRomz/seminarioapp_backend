@@ -387,39 +387,6 @@ const acceptTesinaUrl = async (req, res) => {
   }
 };
 
-const updateTesinaURL = async (req, res) => {
-  try {
-    const { tesinaId } = req.params;
-    const { url_documento } = req.body;
-
-    const tesina = await Tesinas.findByPk(tesinaId);
-
-    if (!tesina) {
-      return res.status(404).json({ error: "Tesina no encontrada" });
-    }
-
-    const tesinasToAccept = await Tesinas.findAll({
-      where: { nombre_tesina: tesina.nombre_tesina, status: "REGISTRADO" },
-    });
-
-    if (tesinasToAccept.length === 0) {
-      return res
-        .status(404)
-        .json({ error: "No hay tesinas registradas con ese nombre" });
-    }
-
-    for (const t of tesinasToAccept) {
-      t.status = "ACEPTADO";
-      await t.save();
-    }
-
-    res.status(200).json({ message: "Tesina aceptada" });
-  } catch (error) {
-    console.error("Error al aceptar la tesina:", error);
-    res.status(500).json({ error: "Error al aceptar la tesina" });
-  }
-};
-
 // Rechazar el registro de la tesina y eliminarlo
 const rejectTesinasByName = async (req, res) => {
   try {
@@ -523,12 +490,35 @@ const rejectTesinaDocumento = async (req, res) => {
   }
 };
 
+const updateTesinaURL = async (req, res) => {
+  try {
+    const { tesinaId } = req.params;
+    const { url_documento } = req.body;
+
+    const tesina = await Tesinas.findByPk(tesinaId);
+
+    if (!tesina) {
+      return handleNotFoundError("Tesina no encontrada", res);
+    }
+
+    tesina.url_documento = url_documento;
+    await tesina.save();
+
+    res.json({
+      msg: "URL de la Tesina actualizada con éxito",
+    });
+  } catch (error) {
+    return handleInternalServerError(
+      "Error al actualizar la URL de la Tesina",
+      res
+    );
+  }
+};
+
 const saveProyecto = async (req, res) => {
   try {
     const { tesina_id, nombre_proyecto, descripcion_proyecto, url_documento } =
       req.body;
-
-    console.log(req.body);
 
     const tesina = await Tesinas.findByPk(tesina_id);
 
@@ -550,6 +540,27 @@ const saveProyecto = async (req, res) => {
     });
   } catch (error) {
     return handleInternalServerError("Error al guardar el Proyecto", res);
+  }
+};
+
+const rechazarProyecto = async (req, res) => {
+  try {
+    const { proyectoId, motivo } = req.params;
+
+    const proyecto = await Proyectos.findByPk(proyectoId);
+
+    if (!proyecto) {
+      return handleNotFoundError("Proyecto no encontrado", res);
+    }
+
+    proyecto.status = "RECHAZADO";
+    await proyecto.save();
+
+    res.json({
+      msg: "Proyecto rechazado con éxito",
+    });
+  } catch (error) {
+    return handleInternalServerError("Error al rechazar el Proyecto", res);
   }
 };
 

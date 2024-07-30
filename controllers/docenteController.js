@@ -9,6 +9,8 @@ import {
   handleInternalServerError,
 } from "../Utils/index.js";
 
+import { sendEmailRejectionProyecto } from "../emails/authEmailService.js";
+
 const getModulos = async (req, res) => {
   const { id } = req.params;
   console.log("ID:", id);
@@ -176,13 +178,25 @@ const aceptarProyecto = async (req, res) => {
 const rechazarProyecto = async (req, res) => {
   const { proyecto_id, comentario } = req.body;
 
-  console.log(comentario);
   try {
     const proyecto = await Proyectos.findOne({
+      include: [
+        {
+          model: Tesinas,
+          include: [
+            {
+              model: Usuarios,
+              as: "Alumno",
+              attributes: ["email_usuario", "nombre"],
+            },
+          ],
+        },
+      ],
       where: {
         proyecto_id,
       },
     });
+
     if (!proyecto) {
       return handleBadRequestError("No se pudo encontrar el proyecto.", res);
     }
@@ -192,6 +206,12 @@ const rechazarProyecto = async (req, res) => {
         proyecto_id,
       },
     });
+
+    await sendEmailRejectionProyecto(
+      proyecto.tesina.Alumno.email_usuario,
+      proyecto.tesina.Alumno.nombre,
+      comentario
+    );
 
     res.json({
       msg: "Proyecto rechazado correctamente.",

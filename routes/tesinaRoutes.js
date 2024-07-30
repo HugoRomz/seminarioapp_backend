@@ -3,20 +3,20 @@ import authMiddleware from "../middleware/authMiddleware.js";
 import verificarRol from "../middleware/verificarRol.js";
 
 import {
-    createInvitation,
-    getUserInvitations,
-    getInvitationsForUser,
-    acceptInvitation,
-    rejectInvitation,
-    createTesina,
-    getTesinasByUser,
-    getAllTesinas,
-    acceptTesinasByName,
-    acceptTesinaUrl,
-    rejectTesinasByName,
-    rejectTesinaDocumento,
-    updateTesinaURL,
-    saveProyecto,
+  createInvitation,
+  getUserInvitations,
+  getInvitationsForUser,
+  acceptInvitation,
+  rejectInvitation,
+  createTesina,
+  getTesinasByUser,
+  getAllTesinas,
+  acceptTesinasByName,
+  acceptTesinaUrl,
+  rejectTesinasByName,
+  rejectTesinaDocumento,
+  updateTesinaURL,
+  saveProyecto,
 } from "../controllers/tesinaController.js";
 
 const router = Router();
@@ -80,38 +80,38 @@ router.post(
 );
 
 router.get(
-    "/tesinas",
-    authMiddleware,
-    verificarRol(["Alumno"]),
-    getAllTesinas
+  "/tesinas",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getAllTesinas
 );
 
 router.put(
-    "/aceptar/:tesinaId",
-    authMiddleware,
-    verificarRol(["Administrador"]),
-    acceptTesinasByName
+  "/aceptar/:tesinaId",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  acceptTesinasByName
 );
 
 router.put(
-    "/aceptarurl/:tesinaId",
-    authMiddleware,
-    verificarRol(["Administrador"]),
-    acceptTesinaUrl
+  "/aceptarurl/:tesinaId",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  acceptTesinaUrl
 );
 
 router.delete(
-    "/rechazar/registro/:tesinaId/:motivo",
-    authMiddleware,
-    verificarRol(["Administrador"]),
-    rejectTesinasByName
+  "/rechazar/registro/:tesinaId/:motivo",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  rejectTesinasByName
 );
 
 router.put(
-    "/rechazar/documento/:tesinaId/:motivo",
-    authMiddleware,
-    verificarRol(["Administrador"]),
-    rejectTesinaDocumento
+  "/rechazar/documento/:tesinaId/:motivo",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  rejectTesinaDocumento
 );
 
 export default router;
