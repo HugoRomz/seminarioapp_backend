@@ -97,7 +97,7 @@ export const Tesinas = sequelize.define(
       defaultValue: "PENDIENTE",
     },
     url_documento: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.TEXT,
       allowNull: true,
     },
   },
@@ -140,7 +140,7 @@ export const Proyectos = sequelize.define(
       defaultValue: "PENDIENTE",
     },
     url_documento: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.TEXT,
       allowNull: true,
     },
   },
