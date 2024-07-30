@@ -15,13 +15,6 @@ import {
     acceptTesinaUrl,
     rejectTesinasByName,
     rejectTesinaDocumento,
-    createInvitation,
-    getUserInvitations,
-    getInvitationsForUser,
-    acceptInvitation,
-    rejectInvitation,
-    createTesina,
-    getTesinasByUser,
     updateTesinaURL,
     saveProyecto,
 } from "../controllers/tesinaController.js";
