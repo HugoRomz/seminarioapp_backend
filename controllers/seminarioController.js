@@ -764,6 +764,34 @@ const obtenerTesinasyProyectos = async (req, res) => {
   res.json(tesinas);
 };
 
+const cerrarCurso = async (req, res) => {
+  const { idCurso } = req.params;
+
+  try {
+    if (!idCurso) {
+      return handleBadRequestError("Falta el id del curso", res);
+    }
+
+    await CursoPeriodos.update(
+      {
+        status: "Finalizado",
+      },
+      {
+        where: {
+          curso_periodo_id: idCurso,
+        },
+      }
+    );
+
+    res.json({
+      msg: "El curso se cerró correctamente",
+    });
+  } catch (error) {
+    console.error("Error al cerrar curso:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
 export {
   getSeminarioActivo,
   rechazarCurso,
@@ -784,4 +812,5 @@ export {
   obtenerAlumnosConstancias,
   obtenerTesinasyProyectos,
   obtenerAlumnosCurso,
+  cerrarCurso,
 };

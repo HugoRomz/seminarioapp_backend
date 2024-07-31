@@ -341,13 +341,13 @@ async function seedDBTest() {
 
 async function seedDB() {
   try {
-    // await sequelize.transaction(async (t) => {
-    //   console.log("Desde seedBD");
-    //   await Roles.bulkCreate(data.roles, { transaction: t });
-    //   console.log("Los roles fueron ingresados correctamente");
-    //   await Documentos.bulkCreate(data.documentos, { transaction: t });
-    //   console.log("Los documentos fueron ingresados correctamente");
-    // });
+    await sequelize.transaction(async (t) => {
+      console.log("Desde seedBD");
+      await Roles.bulkCreate(data.roles, { transaction: t });
+      console.log("Los roles fueron ingresados correctamente");
+      await Documentos.bulkCreate(data.documentos, { transaction: t });
+      console.log("Los documentos fueron ingresados correctamente");
+    });
     await createAdmin();
     console.log("Usuario sembrado en la base de datos correctamente.");
     console.log("Datos de prueba ingresados correctamente.");

@@ -22,6 +22,7 @@ import {
   obtenerAlumnosConstancias,
   obtenerTesinasyProyectos,
   obtenerAlumnosCurso,
+  cerrarCurso,
 } from "../controllers/seminarioController.js";
 
 const router = Router();
@@ -150,6 +151,13 @@ router.get(
   authMiddleware,
   verificarRol(["Administrador"]),
   obtenerTesinasyProyectos
+);
+
+router.put(
+  "/cerrarCurso/:idCurso",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  cerrarCurso
 );
 
 export default router;
