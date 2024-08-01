@@ -15,9 +15,9 @@ export async function createAdmin() {
       return;
     }
     const usuario = await Usuarios.create({
-      nombre: "Admin",
-      apellido_p: "is",
-      apellido_m: "trador",
+      nombre: "SUPER",
+      apellido_p: "ADMI",
+      apellido_m: "NISTRADOR",
       curp: "NULL",
       telefono_usuario: "0000000000",
       email_usuario: "admin@unach.mx",

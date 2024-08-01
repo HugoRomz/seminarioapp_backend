@@ -741,6 +741,7 @@ const updateDocentes = async (req, res) => {
     const {
       usuario_id,
       num_plaza,
+      curp,
       nombre,
       apellido_p,
       apellido_m,
@@ -749,27 +750,37 @@ const updateDocentes = async (req, res) => {
       password,
     } = req.body;
 
-    // Actualiza la información del usuario en la tabla Usuarios
-    await Usuarios.update(
-      {
-        usuario_id,
-        nombre,
-        apellido_p,
-        apellido_m,
-        telefono_usuario,
-        email_usuario,
-        password,
-      },
-      { where: { usuario_id: id }, individualHooks: true }
-    );
+    const usuario = await Usuarios.findByPk(usuario_id);
 
-    // Actualiza la información del alumno en la tabla Alumno
-    await Docente.update(
-      {
-        num_plaza,
-      },
-      { where: { usuario_id: id } }
-    );
+    if (!usuario) {
+      return handleNotFoundError("El Usuario no existe", res);
+    }
+
+    if (curp !== usuario.curp) {
+      const existingUserWithCurp = await Usuarios.findOne({
+        where: { curp },
+      });
+
+      if (existingUserWithCurp) {
+        await t.rollback();
+        return res.status(400).json({
+          msg: "La CURP ya está registrada por otro usuario",
+        });
+      }
+    }
+
+    usuario.nombre = nombre;
+    usuario.apellido_p = apellido_p;
+    usuario.apellido_m = apellido_m;
+    usuario.curp = curp;
+    usuario.telefono_usuario = telefono_usuario;
+    usuario.email_usuario = email_usuario;
+
+    if (password) {
+      usuario.password = password;
+    }
+
+    await usuario.save();
 
     res.json({
       msg: "El Usuario se editó correctamente",

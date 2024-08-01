@@ -152,19 +152,31 @@ const getCarreras = async (req, res) => {
 
 const getCursosPeriodos = async (req, res) => {
   try {
+    const today = new Date();
+    const twoWeeksFromNow = new Date(today);
+    twoWeeksFromNow.setDate(today.getDate() + 14); // Añadir 14 días a la fecha actual
+
     const cursos = await CursoPeriodos.findAll({
       include: [
         {
           model: Cursos,
         },
         {
-          // Periodos mas cercanos a la fecha actual
           model: Periodos,
           where: {
             status: true,
-            fecha_inicio: {
-              [Op.gte]: literal("CURRENT_DATE"),
-            },
+            [Op.and]: [
+              {
+                fecha_inicio: {
+                  [Op.lte]: twoWeeksFromNow, // Inicia dentro de las próximas dos semanas
+                },
+              },
+              {
+                fecha_fin: {
+                  [Op.gte]: today, // Aún no ha terminado
+                },
+              },
+            ],
           },
         },
       ],
@@ -172,6 +184,10 @@ const getCursosPeriodos = async (req, res) => {
         status: "Pendiente",
       },
     });
+
+    if (cursos.length === 0) {
+      return handleNotFoundError("No se encontraron cursos", res);
+    }
     res.json(cursos);
   } catch (error) {
     return handleNotFoundError("No se encontraron cursos", res);
