@@ -7,7 +7,7 @@ import {
   DetallesDocumentosDocente,
 } from "../models/Documentos.js";
 
-import { TipoEvidencias } from "../models/Evidencias.js";
+import { Actividad, TipoEvidencias } from "../models/Evidencias.js";
 
 import {
   handleNotFoundError,
@@ -18,13 +18,14 @@ import {
 } from "../Utils/index.js";
 import { CursoPeriodos, Periodos } from "../models/Periodo.js";
 import { Roles } from "../models/Roles.js";
-import { Usuarios } from "../models/Usuarios.js";
+import { UserPreregister, Usuarios } from "../models/Usuarios.js";
 import { Usuarios_Roles } from "../models/Usuarios_Roles.js";
 import { sequelize } from "../config/db.js";
 
 const getMaterias = async (req, res) => {
   try {
-    // Busca el curso activo
+    // busca todas la materias y que vengan del id primero al ultimo
+
     const materias = await Materias.findAll();
 
     if (materias && materias.length > 0) {
@@ -92,11 +93,24 @@ const deleteMateria = async (req, res) => {
   try {
     const { id } = req.params;
 
+    const cursos = await DetalleCurso.findAll({
+      where: {
+        materia_id: id,
+      },
+    });
+
+    if (cursos.length > 0) {
+      return handleBadRequestError(
+        "La materia esta siendo utilizada por cursos, por lo que no se puede eliminar",
+        res
+      );
+    }
     await Materias.destroy({
       where: {
         materia_id: id,
       },
     });
+
     res.json({
       msg: "La materia se elimino correctamente",
     });
@@ -171,6 +185,24 @@ const deleteCarreras = async (req, res) => {
   try {
     const { id } = req.params;
 
+    const cursos = await Cursos.findAll({
+      where: {
+        carrera_id: id,
+      },
+    });
+
+    const preregistros = await UserPreregister.findAll({
+      where: {
+        carrera: id,
+      },
+    });
+
+    if (cursos.length > 0 || preregistros.length > 0) {
+      return handleBadRequestError(
+        "La carrera esta siendo utilizada por cursos o preregistros, por lo que no se puede eliminar",
+        res
+      );
+    }
     await Carreras.destroy({
       where: {
         carrera_id: id,
@@ -244,6 +276,19 @@ const updateRol = async (req, res) => {
 const deleteRol = async (req, res) => {
   try {
     const { id } = req.params;
+
+    const usuarios = await Usuarios_Roles.findAll({
+      where: {
+        roleRolId: id,
+      },
+    });
+
+    if (usuarios.length > 0) {
+      return handleBadRequestError(
+        "El rol esta siendo utilizado por usuarios, por lo que no se puede eliminar",
+        res
+      );
+    }
 
     await Roles.destroy({
       where: {
@@ -385,6 +430,19 @@ const updatePeriodo = async (req, res) => {
 const deletePeriodo = async (req, res) => {
   try {
     const { id } = req.params;
+
+    const cursos = await CursoPeriodos.findAll({
+      where: {
+        periodo_id: id,
+      },
+    });
+
+    if (cursos.length > 0) {
+      return handleBadRequestError(
+        "El periodo esta siendo utilizado por cursos, por lo que no se puede eliminar",
+        res
+      );
+    }
 
     await Periodos.destroy({
       where: {
@@ -574,6 +632,25 @@ const deleteDocumento = async (req, res) => {
   try {
     const { id } = req.params;
 
+    const detallesAlumnos = await DetallesDocumentosAlumno.findAll({
+      where: {
+        documento_id: id,
+      },
+    });
+
+    const detallesDocentes = await DetallesDocumentosDocente.findAll({
+      where: {
+        documento_id: id,
+      },
+    });
+
+    if (detallesAlumnos.length > 0 || detallesDocentes.length > 0) {
+      return handleBadRequestError(
+        "El documento esta siendo utilizado por alumnos o docentes, por lo que no se puede eliminar",
+        res
+      );
+    }
+
     await Documentos.destroy({
       where: {
         documento_id: id,
@@ -696,6 +773,19 @@ const updateTipoEvidencia = async (req, res) => {
 const deleteTipoEvidencia = async (req, res) => {
   try {
     const { id } = req.params;
+
+    const evidencias = await Actividad.findAll({
+      where: {
+        tipo_evidencia_id: id,
+      },
+    });
+
+    if (evidencias.length > 0) {
+      return handleBadRequestError(
+        "El tipo de evidencia esta siendo utilizado por actividades, por lo que no se puede eliminar",
+        res
+      );
+    }
 
     await TipoEvidencias.destroy({
       where: {

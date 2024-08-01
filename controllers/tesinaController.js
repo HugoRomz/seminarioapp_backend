@@ -273,7 +273,9 @@ const createTesina = async (req, res) => {
 const getTesinasByUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const tesinas = await Tesinas.findAll({
+
+    // Obtener las tesinas del usuario especificado
+    const tesinasUsuario = await Tesinas.findAll({
       include: [
         {
           model: Usuarios,
@@ -282,19 +284,48 @@ const getTesinasByUser = async (req, res) => {
           required: false,
         },
         {
+          model: Usuarios,
+          as: "Alumno",
+          attributes: ["nombre", "apellido_p", "apellido_m", "email_usuario"],
+          required: true,
+        },
+        {
           model: Proyectos,
         },
       ],
       where: { usuario_id_alumno: userId },
     });
 
-    if (tesinas.length === 0) {
+    if (tesinasUsuario.length === 0) {
       return res
         .status(404)
         .json({ message: "No se encontraron tesinas para este usuario." });
     }
 
-    res.status(200).json(tesinas);
+    // Buscar tesinas similares con diferentes alumnos
+    for (const tesina of tesinasUsuario) {
+      const tesinasCompaneros = await Tesinas.findAll({
+        include: [
+          {
+            model: Usuarios,
+            as: "Alumno",
+            attributes: ["nombre", "apellido_p", "apellido_m"],
+            required: true,
+          },
+        ],
+        where: {
+          nombre_tesina: tesina.nombre_tesina, // Suponiendo que "nombre_tesina" es la columna que identifica tesinas similares
+          usuario_id_alumno: { [Op.ne]: userId }, // Diferente alumno
+        },
+      });
+
+      // Agregar los nombres de los compañeros a la tesina principal
+      tesina.dataValues.companeros = tesinasCompaneros.map(
+        (tesinaCompanero) =>
+          `${tesinaCompanero.Alumno.nombre} ${tesinaCompanero.Alumno.apellido_p} ${tesinaCompanero.Alumno.apellido_m}`
+      );
+    }
+    res.status(200).json(tesinasUsuario);
   } catch (error) {
     console.error("Error al obtener las tesinas del usuario:", error);
     res
