@@ -170,6 +170,19 @@ const data = {
   ],
   docentes: [
     {
+      nombre: "Rosa Isela",
+      apellido_p: "Lopez",
+      apellido_m: "Aguilar",
+      curp: "TFRO650605MGTRJQ25",
+      telefono_usuario: "9621234234",
+      email_usuario: "rosa.aguilarfalso@unach.mx",
+      password: "root",
+      num_plaza: "E0363040000119",
+      licenciatura: "Computer Science",
+      maestria: "Information Technology",
+      doctorado: "Software Engineering",
+    },
+    {
       nombre: "Rene Servando",
       apellido_p: "Rivera",
       apellido_m: "Roblero",

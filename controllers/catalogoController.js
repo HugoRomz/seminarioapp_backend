@@ -5,6 +5,8 @@ import {
   Documentos,
   DetallesDocumentosAlumno,
   DetallesDocumentosDocente,
+  DocumentosAlumnoEstado,
+  DocumentosDocenteEstado,
 } from "../models/Documentos.js";
 
 import { Actividad, TipoEvidencias } from "../models/Evidencias.js";
@@ -477,8 +479,14 @@ const getCursos = async (req, res) => {
             },
           ],
         },
-        { model: DetallesDocumentosAlumno, include: [Documentos] },
-        { model: DetallesDocumentosDocente, include: [Documentos] },
+        {
+          model: DetallesDocumentosAlumno,
+          include: [Documentos, DocumentosAlumnoEstado],
+        },
+        {
+          model: DetallesDocumentosDocente,
+          include: [Documentos, DocumentosDocenteEstado],
+        },
       ],
     });
 
@@ -993,6 +1001,123 @@ const deleteUsuario = async (req, res) => {
   }
 };
 
+const updateDocumentosCurso = async (req, res) => {
+  try {
+    const {
+      curso_id,
+      det_doc_alumnos = [],
+      det_doc_egresados = [],
+      det_doc_docentes = [],
+    } = req.body;
+
+    if (
+      det_doc_alumnos.length === 0 &&
+      det_doc_egresados.length === 0 &&
+      det_doc_docentes.length === 0
+    ) {
+      return handleBadRequestError(
+        "Los datos proporcionados están vacíos. Operación cancelada.",
+        res
+      );
+    }
+
+    const detalleDocAlumnos = await DetallesDocumentosAlumno.findAll({
+      where: { curso_id, egresado: false },
+    });
+
+    const detalleDocAlumnosEgresados = await DetallesDocumentosAlumno.findAll({
+      where: { curso_id, egresado: true },
+    });
+
+    const detalleDocDocentes = await DetallesDocumentosDocente.findAll({
+      where: { curso_id },
+    });
+
+    let validate = false;
+
+    // Buscar en doc_alumnos_estado si existen alumnos asociados a los documentos de det_doc_alumnos
+
+    if (validate === true) {
+      return handleBadRequestError(
+        "No se pueden editar documentos, porque existen alumnos asociados a estos documentos",
+        res
+      );
+    } else {
+      const editarRegistros = async (
+        registros,
+        nuevosRegistros,
+        modelo,
+        idModelo,
+        extraFields = {}
+      ) => {
+        for (const registro of registros) {
+          const existe = nuevosRegistros.find(
+            (nuevoRegistro) =>
+              nuevoRegistro.documento_id === registro.documento_id
+          );
+
+          if (!existe) {
+            await modelo.destroy({
+              where: {
+                [idModelo]: registro[idModelo],
+                curso_id: registro.curso_id,
+              },
+            });
+          }
+        }
+
+        for (const nuevoRegistro of nuevosRegistros) {
+          const existe = registros.find(
+            (registro) =>
+              registro.documento_id === nuevoRegistro.documento_id &&
+              registro.curso_id === curso_id
+          );
+
+          if (!existe) {
+            await modelo.create({
+              documento_id: nuevoRegistro.documento_id,
+              curso_id,
+              ...extraFields,
+            });
+          }
+        }
+      };
+
+      await editarRegistros(
+        detalleDocAlumnos,
+        det_doc_alumnos,
+        DetallesDocumentosAlumno,
+        "det_alumno_id",
+        { egresado: false }
+      );
+
+      await editarRegistros(
+        detalleDocAlumnosEgresados,
+        det_doc_egresados,
+        DetallesDocumentosAlumno,
+        "det_alumno_id",
+        { egresado: true }
+      );
+
+      await editarRegistros(
+        detalleDocDocentes,
+        det_doc_docentes,
+        DetallesDocumentosDocente,
+        "det_docente_id"
+      );
+
+      return res.json({
+        msg: "Los documentos se actualizaron correctamente",
+      });
+    }
+  } catch (error) {
+    return handleInternalServerError(
+      "Error al actualizar los documentos del curso",
+      res
+    );
+  }
+};
+
 export {
   getCarreras,
   getMaterias,
@@ -1026,4 +1151,5 @@ export {
   insertarUsuario,
   updateUsuario,
   deleteUsuario,
+  updateDocumentosCurso,
 };

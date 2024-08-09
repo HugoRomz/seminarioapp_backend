@@ -35,6 +35,7 @@ import {
   insertarUsuario,
   updateUsuario,
   deleteUsuario,
+  updateDocumentosCurso,
 } from "../controllers/catalogoController.js";
 
 const router = Router();
@@ -239,6 +240,13 @@ router.post(
   authMiddleware,
   verificarRol(["Administrador"]),
   asignarDocumentos
+);
+
+router.put(
+  "/documentosCurso",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  updateDocumentosCurso
 );
 
 export default router;
