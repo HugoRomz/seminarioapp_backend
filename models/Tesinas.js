@@ -1,6 +1,7 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/db.js";
 import { Usuarios } from "./Usuarios.js";
+import { CursoPeriodos } from "./Periodo.js";
 
 export const Invitaciones = sequelize.define(
   "invitaciones",
@@ -99,6 +100,14 @@ export const Tesinas = sequelize.define(
     url_documento: {
       type: DataTypes.TEXT,
       allowNull: true,
+    },
+    curso_periodo_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: CursoPeriodos,
+        key: "curso_periodo_id",
+      },
     },
   },
   {
