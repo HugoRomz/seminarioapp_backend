@@ -62,15 +62,15 @@ const getSeminarioActivo = async (req, res) => {
           ],
           where: {
             curso_periodo_id: cp.curso_periodo_id,
+            status: "ACTIVO",
           },
         });
-        console.log(cp.curso_periodo_id, aspirantes);
+
         cp.dataValues.aspirantes = aspirantes;
       }
 
       res.json(cursoperiodo);
     } else {
-      console.log("No hay nada");
       res.status(404).json({ error: "No se encontró ningún curso activo" });
     }
   } catch (error) {
@@ -201,7 +201,7 @@ const getModulos = async (req, res) => {
 
 const getEvidencias = async (req, res) => {
   const { actividad_id } = req.params;
-  console.log(actividad_id);
+
   try {
     const evidencias = await Evidencias.findAll({
       where: {
@@ -752,14 +752,12 @@ const obtenerAlumnosCurso = async (req, res) => {
 const obtenerAlumnosConstancias = async (req, res) => {
   const curso_id = req.params.cursoId;
 
-  console.log(curso_id);
-  console.log("hola 2");
   // res.json(detalleCurso.calificaciones);
 };
 
 const obtenerTesinasyProyectos = async (req, res) => {
   const curso_id = req.params.cursoId;
-  console.log(curso_id);
+
   const tesinas = ["tesina", "proyecto"];
   res.json(tesinas);
 };
@@ -792,6 +790,154 @@ const cerrarCurso = async (req, res) => {
   }
 };
 
+const getAlumnosAceptados = async (req, res) => {
+  try {
+    const { cursoId } = req.params;
+
+    if (!cursoId) {
+      return handleBadRequestError("Falta el id del curso", res);
+    }
+
+    const alumnos = await Usuarios.findAll({
+      attributes: ["usuario_id", "nombre", "apellido_p", "apellido_m"],
+      include: [
+        {
+          model: Alumno,
+          required: false,
+        },
+        {
+          model: Egresado,
+          required: false,
+        },
+        {
+          model: Roles,
+          where: {
+            nombre_rol: "Alumno",
+          },
+        },
+      ],
+      where: {
+        curso_periodo_id: cursoId,
+        status: "ACTIVO",
+      },
+    });
+
+    if (alumnos && alumnos.length > 0) {
+      res.json(alumnos);
+    } else {
+      res.json([]);
+    }
+  } catch (error) {
+    console.error("Error al buscar alumnos aceptados:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
+const aceptarCursoconAlumnos = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    if (
+      !req.body.dataCurso ||
+      !Array.isArray(req.body.dataCurso) ||
+      req.body.dataCurso.length === 0
+    ) {
+      return handleBadRequestError("No se enviaron datos del curso", res);
+    }
+    const cursoData = req.body.dataCurso[0];
+    const { curso_periodo_id } = cursoData;
+
+    if (!curso_periodo_id) {
+      return handleBadRequestError("Falta el curso_periodo_id", res);
+    }
+
+    const curso = await CursoPeriodos.findByPk(curso_periodo_id);
+
+    if (!curso) {
+      return handleBadRequestError("Curso no encontrado", res);
+    }
+
+    const DocumentosDATA = await DetallesDocumentosDocente.findAll({
+      where: { curso_id: curso.curso_id },
+      include: {
+        model: Documentos,
+        attributes: ["documento_id", "nombre_documento"],
+      },
+      attributes: ["det_docente_id"],
+      transaction: t,
+    });
+
+    const estadosDocentes = [];
+
+    const moduloCreado = await Modulos.create(
+      {
+        det_curso_id: cursoData.detalle_curso_id,
+        usuario_id: cursoData.docente[0].id,
+        nombre_modulo: cursoData.materia,
+        fecha_inicio: cursoData.fecha_inicio,
+        fecha_cierre: cursoData.fecha_cierre,
+        curso_periodo_id,
+      },
+      { transaction: t }
+    );
+
+    for (const documento of DocumentosDATA) {
+      estadosDocentes.push({
+        det_docente_id: documento.det_docente_id,
+        usuario_id: cursoData.docente[0].id,
+        status: "PENDIENTE",
+      });
+    }
+
+    await DocumentosDocenteEstado.bulkCreate(estadosDocentes, {
+      transaction: t,
+    });
+
+    await CursoPeriodos.update(
+      { status: "Aceptado" },
+      {
+        where: { curso_periodo_id },
+        transaction: t,
+      }
+    );
+
+    await Usuarios.update(
+      {
+        curso_periodo_id,
+        status: "PENDIENTE",
+      },
+      {
+        where: { usuario_id: cursoData.docente[0].id },
+        transaction: t,
+      }
+    );
+
+    const modulos = [moduloCreado];
+
+    const alumnosAceptados = req.body.alumnos.data;
+
+    for (const modulo of modulos) {
+      for (const alumno of alumnosAceptados) {
+        await Calificaciones.create(
+          {
+            usuario_id: alumno.usuario_id,
+            modulo_id: modulo.modulo_id,
+            calificacion: 5,
+          },
+          { transaction: t }
+        );
+      }
+    }
+
+    await t.commit();
+    res.json({ msg: "La operación se realizó correctamente" });
+  } catch (error) {
+    console.error("Error al aceptar curso:", error);
+
+    await t.rollback();
+    return handleInternalServerError(error, res);
+  }
+};
+
 export {
   getSeminarioActivo,
   rechazarCurso,
@@ -813,4 +959,6 @@ export {
   obtenerTesinasyProyectos,
   obtenerAlumnosCurso,
   cerrarCurso,
+  getAlumnosAceptados,
+  aceptarCursoconAlumnos,
 };

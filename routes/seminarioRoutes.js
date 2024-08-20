@@ -23,6 +23,8 @@ import {
   obtenerTesinasyProyectos,
   obtenerAlumnosCurso,
   cerrarCurso,
+  getAlumnosAceptados,
+  aceptarCursoconAlumnos,
 } from "../controllers/seminarioController.js";
 
 const router = Router();
@@ -158,6 +160,20 @@ router.put(
   authMiddleware,
   verificarRol(["Administrador"]),
   cerrarCurso
+);
+
+router.get(
+  "/alumnosAceptados/:cursoId",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getAlumnosAceptados
+);
+
+router.post(
+  "/aceptarCursoconAlumnos",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  aceptarCursoconAlumnos
 );
 
 export default router;
