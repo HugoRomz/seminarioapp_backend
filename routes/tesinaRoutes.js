@@ -17,6 +17,8 @@ import {
   rejectTesinaDocumento,
   updateTesinaURL,
   saveProyecto,
+  getDocentesConTesinasAsignadas,
+  getPeriodos,
 } from "../controllers/tesinaController.js";
 
 const router = Router();
@@ -80,7 +82,7 @@ router.post(
 );
 
 router.get(
-  "/tesinas",
+  "/tesinasall/:id",
   authMiddleware,
   verificarRol(["Administrador"]),
   getAllTesinas
@@ -112,6 +114,20 @@ router.put(
   authMiddleware,
   verificarRol(["Administrador"]),
   rejectTesinaDocumento
+);
+
+router.get(
+  "/docentes-asignados/:id",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getDocentesConTesinasAsignadas
+);
+
+router.get(
+  "/periodo",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getPeriodos
 );
 
 export default router;

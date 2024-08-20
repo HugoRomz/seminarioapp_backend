@@ -6,6 +6,8 @@ import {
   sendEmailRejectionDocumento,
 } from "../emails/authEmailService.js";
 import { Op } from "sequelize";
+import { Periodos, CursoPeriodos } from "../models/Periodo.js";
+import { Cursos } from "../models/Cursos.js";
 import { Proyectos } from "../models/Tesinas.js";
 
 import {
@@ -314,7 +316,7 @@ const getTesinasByUser = async (req, res) => {
           },
         ],
         where: {
-          nombre_tesina: tesina.nombre_tesina, // Suponiendo que "nombre_tesina" es la columna que identifica tesinas similares
+          nombre_tesina: tesina.nombre_tesina, 
           usuario_id_alumno: { [Op.ne]: userId }, // Diferente alumno
         },
       });
@@ -336,7 +338,11 @@ const getTesinasByUser = async (req, res) => {
 
 const getAllTesinas = async (req, res) => {
   try {
+    const { id } = req.params;
     const tesinas = await Tesinas.findAll({
+      where: {
+        curso_periodo_id: id,
+      },
       include: [
         {
           model: Usuarios,
@@ -595,6 +601,66 @@ const rechazarProyecto = async (req, res) => {
   }
 };
 
+const getDocentesConTesinasAsignadas = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const docentes = await Usuarios.findAll({
+      attributes: [
+        "usuario_id",
+        "nombre",
+        "apellido_p",
+        "apellido_m",
+        "curp",
+        "email_usuario",
+        "telefono_usuario",
+      ],
+    });
+
+    const docentesConTesinas = await Promise.all(
+      docentes.map(async (docente) => {
+        const tesinas = await Tesinas.findAll({
+          where: { usuario_id_docente: docente.usuario_id, curso_periodo_id: id },
+          attributes: ["tesina_id", "nombre_tesina", "area_tesina", "resenia_tesina", "fecha_registro", "status", "url_documento"],
+        });
+
+        if (tesinas.length > 0) {
+          return {
+            ...docente.toJSON(),
+            tesinas,
+          };
+        }
+        return null;
+      })
+    );
+
+    const docentesConTesinasAsignadas = docentesConTesinas.filter(docente => docente !== null);
+
+    res.status(200).json(docentesConTesinasAsignadas);
+  } catch (error) {
+    console.error("Error al obtener los docentes y tesinas asignadas:", error);
+    res.status(500).json({ error: "Error al obtener los docentes y tesinas asignadas" });
+  }
+};
+
+const getPeriodos = async (req, res) => {
+  try {
+    const periodos = await Periodos.findAll({
+      where: {
+        status: true,
+      },
+    });
+
+    if (periodos && periodos.length > 0) {
+      res.json(periodos);
+    } else {
+      res.status(404).json({ error: "No se encontró ningún periodo" });
+    }
+  } catch (error) {
+    console.error("Error al buscar periodos:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
 export {
   createInvitation,
   getUserInvitations,
@@ -610,4 +676,6 @@ export {
   rejectTesinaDocumento,
   updateTesinaURL,
   saveProyecto,
+  getDocentesConTesinasAsignadas,
+  getPeriodos,
 };
