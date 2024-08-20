@@ -95,26 +95,36 @@ const deleteMateria = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const cursos = await DetalleCurso.findAll({
-      where: {
-        materia_id: id,
+    await Materias.update(
+      {
+        status: false,
       },
-    });
+      { where: { materia_id: id } }
+    );
 
-    if (cursos.length > 0) {
-      return handleBadRequestError(
-        "La materia esta siendo utilizada por cursos, por lo que no se puede eliminar",
-        res
-      );
-    }
-    await Materias.destroy({
-      where: {
-        materia_id: id,
-      },
-    });
+    // const cursos = await DetalleCurso.findAll({
+    //   where: {
+    //     materia_id: id,
+    //   },
+    // });
+
+    // if (cursos.length > 0) {
+    //   return handleBadRequestError(
+    //     "La materia esta siendo utilizada por cursos, por lo que no se puede eliminar",
+    //     res
+    //   );
+    // }
+    // await Materias.destroy({
+    //   where: {
+    //     materia_id: id,
+    //   },
+    // });
+    // res.json({
+    //   msg: "La materia se elimino correctamente",
+    // });
 
     res.json({
-      msg: "La materia se elimino correctamente",
+      msg: "La materia se desactivo correctamente",
     });
   } catch (error) {
     return handleInternalServerError(error, res);
