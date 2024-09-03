@@ -19,6 +19,7 @@ import {
   saveProyecto,
   getDocentesConTesinasAsignadas,
   getPeriodos,
+  getDocentes,
 } from "../controllers/tesinaController.js";
 
 const router = Router();
@@ -128,6 +129,13 @@ router.get(
   authMiddleware,
   verificarRol(["Administrador"]),
   getPeriodos
+);
+
+router.get(
+  "/docentes",
+  authMiddleware,
+  verificarRol(["Administrador"]),
+  getDocentes
 );
 
 export default router;
