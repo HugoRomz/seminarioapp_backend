@@ -1,9 +1,11 @@
-import { Usuarios } from "../models/Usuarios.js";
+import { Usuarios, Docente } from "../models/Usuarios.js";
 import { Invitaciones, Tesinas } from "../models/Tesinas.js";
 import {
   sendEmailInvitation,
   sendEmailRejectionRegistro,
   sendEmailRejectionDocumento,
+  sendEmailAcceptanceDocumento,
+  sendEmailAcceptanceRegistro,
 } from "../emails/authEmailService.js";
 import { Op } from "sequelize";
 import { Periodos, CursoPeriodos } from "../models/Periodo.js";
@@ -252,6 +254,25 @@ const createTesina = async (req, res) => {
   try {
     const { nombre_tesina, area_tema, resenia_tema, userId } = req.body;
 
+    // Obtener el usuario con su curso_periodo_id
+    const usuario = await Usuarios.findOne({
+      where: { usuario_id: userId },
+      include: {
+        model: CursoPeriodos,
+        attributes: ["curso_periodo_id"],
+      },
+    });
+
+    console.log(usuario)
+
+    if (!usuario || !usuario.curso_periodo_id) {
+      return res
+        .status(404)
+        .json({ error: "Usuario o curso_periodo_id no encontrado" });
+    }
+
+    const curso_periodo_id = usuario.curso_periodo_id;
+
     const nuevaTesina = await Tesinas.create({
       usuario_id_docente: null,
       usuario_id_alumno: userId,
@@ -261,6 +282,7 @@ const createTesina = async (req, res) => {
       fecha_registro: new Date(),
       status: "PENDIENTE",
       url_documento: null,
+      curso_periodo_id: curso_periodo_id, 
     });
 
     res
@@ -271,6 +293,7 @@ const createTesina = async (req, res) => {
     res.status(500).json({ error: "Error al registrar la tesina" });
   }
 };
+
 
 const getTesinasByUser = async (req, res) => {
   try {
@@ -339,11 +362,15 @@ const getTesinasByUser = async (req, res) => {
 const getAllTesinas = async (req, res) => {
   try {
     const { id } = req.params;
+
     const tesinas = await Tesinas.findAll({
-      where: {
-        curso_periodo_id: id,
-      },
       include: [
+        {
+          model: CursoPeriodos,
+          where: {
+            periodo_id: id
+          }
+        },
         {
           model: Usuarios,
           as: "Alumno",
@@ -370,6 +397,19 @@ const acceptTesinasByName = async (req, res) => {
 
     const tesinasToAccept = await Tesinas.findAll({
       where: { nombre_tesina: tesina.nombre_tesina, status: "PENDIENTE" },
+      include: [
+        {
+          model: Usuarios,
+          as: "Alumno",
+          attributes: [
+            "nombre",
+            "apellido_p",
+            "apellido_m",
+            "curp",
+            "email_usuario",
+          ],
+        },
+      ],
     });
 
     if (tesinasToAccept.length === 0) {
@@ -378,14 +418,26 @@ const acceptTesinasByName = async (req, res) => {
         .json({ error: "No hay tesinas pendientes con ese nombre" });
     }
 
-    // Actualizar el estado a "REGISTRADO" y asignar el docente
     for (const t of tesinasToAccept) {
-      t.status = "REGISTRADO";
-      t.usuario_id_docente = docenteId;
-      await t.save();
+      try {
+        t.status = "REGISTRADO";
+        t.usuario_id_docente = docenteId;
+        await t.save();
+
+        // Enviar correo de aceptación
+        await sendEmailAcceptanceRegistro(
+          t.Alumno.email_usuario,
+          t.Alumno.nombre
+        );
+      } catch (error) {
+        console.error(
+          `Error al enviar el correo de aceptación de registro:`,
+          error
+        );
+      }
     }
 
-    res.status(200).json({ message: "Tesinas aceptadas correctamente" });
+    res.status(200).json({ message: "Tesinas aceptadas correctamente y correos enviados" });
   } catch (error) {
     console.error("Error al aceptar las tesinas:", error);
     res.status(500).json({ error: "Error al aceptar las tesinas" });
@@ -404,6 +456,19 @@ const acceptTesinaUrl = async (req, res) => {
 
     const tesinasToAccept = await Tesinas.findAll({
       where: { nombre_tesina: tesina.nombre_tesina, status: "REGISTRADO" },
+      include: [
+        {
+          model: Usuarios,
+          as: "Alumno",
+          attributes: [
+            "nombre",
+            "apellido_p",
+            "apellido_m",
+            "curp",
+            "email_usuario",
+          ],
+        },
+      ],
     });
 
     if (tesinasToAccept.length === 0) {
@@ -413,11 +478,24 @@ const acceptTesinaUrl = async (req, res) => {
     }
 
     for (const t of tesinasToAccept) {
-      t.status = "ACEPTADO";
-      await t.save();
+      try {
+        t.status = "ACEPTADO";
+        await t.save();
+
+        // Enviar correo de aceptación
+        await sendEmailAcceptanceDocumento(
+          t.Alumno.email_usuario,
+          t.Alumno.nombre
+        );
+      } catch (error) {
+        console.error(
+          "Error al enviar el correo de aceptación de documento:",
+          error
+        );
+      }
     }
 
-    res.status(200).json({ message: "Tesina aceptada" });
+    res.status(200).json({ message: "Tesina aceptada y correos enviados" });
   } catch (error) {
     console.error("Error al aceptar la tesina:", error);
     res.status(500).json({ error: "Error al aceptar la tesina" });
@@ -604,6 +682,7 @@ const rechazarProyecto = async (req, res) => {
 const getDocentesConTesinasAsignadas = async (req, res) => {
   try {
     const { id } = req.params;
+
     const docentes = await Usuarios.findAll({
       attributes: [
         "usuario_id",
@@ -619,8 +698,14 @@ const getDocentesConTesinasAsignadas = async (req, res) => {
     const docentesConTesinas = await Promise.all(
       docentes.map(async (docente) => {
         const tesinas = await Tesinas.findAll({
-          where: { usuario_id_docente: docente.usuario_id, curso_periodo_id: id },
+          where: { usuario_id_docente: docente.usuario_id },
           attributes: ["tesina_id", "nombre_tesina", "area_tesina", "resenia_tesina", "fecha_registro", "status", "url_documento"],
+          include: [
+            {
+              model: CursoPeriodos,
+              where: { periodo_id: id },
+            },
+          ],
         });
 
         if (tesinas.length > 0) {
@@ -661,6 +746,36 @@ const getPeriodos = async (req, res) => {
   }
 };
 
+const getDocentes = async (req, res) => {
+  try {
+    const docentes = await Docente.findAll({
+      include: {
+        model: Usuarios,
+        where: {
+          status: "ACTIVO",
+        },
+        attributes: ["nombre", "apellido_p", "apellido_m"], // Seleccionar solo el campo 'nombre' del usuario
+      },
+    });
+
+    const nombreCompleto = docentes.map((docente) => {
+      return {
+        id: docente.usuario_id,
+        nombre: `${docente.usuario.nombre} ${docente.usuario.apellido_p} ${docente.usuario.apellido_m}`,
+      };
+    });
+
+    if (docentes && docentes.length > 0) {
+      res.json(nombreCompleto);
+    } else {
+      res.status(404).json({ error: "No se encontró ningún docente" });
+    }
+  } catch (error) {
+    console.error("Error al buscar docentes:", error);
+    return handleInternalServerError(error, res);
+  }
+};
+
 export {
   createInvitation,
   getUserInvitations,
@@ -678,4 +793,5 @@ export {
   saveProyecto,
   getDocentesConTesinasAsignadas,
   getPeriodos,
+  getDocentes,
 };

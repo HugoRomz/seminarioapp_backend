@@ -1008,3 +1008,179 @@ export async function sendEmailRejectionProyecto(email, nombre, motivo) {
     );
   }
 }
+
+export async function sendEmailAcceptanceDocumento(email, nombre) {
+  try {
+    const info = await transporter.sendMail({
+      from: '"Contacto SIGEST" <proyectoapp781@gmail.com>',
+      to: email,
+      subject: "SIGEST | El archivo de tu tesina ha sido aceptado",
+      html: `<html>
+        <head>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 0;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #fff;
+                    padding: 20px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                }
+                .header img {
+                    width: 100%;
+                    height: auto;
+                }
+                .content {
+                    padding: 20px;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 20px;
+                    font-size: 14px;
+                    color: #aaa;
+                }
+                .content h1 {
+                    font-size: 20px;
+                    color: #333;
+                }
+                .content p {
+                    font-size: 16px;
+                    color: #555;
+                    line-height: 1.5;
+                }
+                .content strong {
+                    color: #333;
+                }
+                .document-name {
+                    font-weight: bold;
+                    color: #5bc0de;
+                }
+                .acceptance-message {
+                    font-weight: bold;
+                    color: #5cb85c;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+              <div class="header">
+                <img src="cid:unach-banner" alt="Universidad Autonoma de Chiapas" />
+              </div>
+              <div class="content">
+                <h1>¡Hola, ${nombre}!</h1>
+                <p>Nos complace informarte que el archivo de tu tesina ha sido <span class="acceptance-message">aceptado</span>.</p>
+                <p>Gracias por tu esfuerzo y dedicación. Ahora puedes continuar con los siguientes pasos del proceso de titulación.</p>
+                <p>Atentamente,<br />Coordinación del Seminario de Titulación y Equipo Sistema de Información para la Gestión del Seminario de Titulación</p>
+              </div>
+              <div class="footer">
+                <p>Este es un mensaje automático, por favor no responder.</p>
+              </div>
+            </div>
+        </body>
+        </html>`,
+      attachments: [
+        {
+          filename: "unach-banner.jpg",
+          path: imagePath,
+          cid: "unach-banner",
+        },
+      ],
+    });
+    console.log("Mensaje enviado: %s", info.messageId);
+  } catch (error) {
+    console.error(
+      `Error al enviar el correo de aceptación del documento: ${error.message}`
+    );
+  }
+}
+
+export async function sendEmailAcceptanceRegistro(email, nombre) {
+  try {
+    const info = await transporter.sendMail({
+      from: '"Contacto SIGEST" <proyectoapp781@gmail.com>',
+      to: email,
+      subject: "SIGEST | Tu registro de tesina ha sido aceptado",
+      html: `<html>
+        <head>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 0;
+                  }
+                  .container {
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #fff;
+                    padding: 20px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                  }
+                  .header img {
+                    width: 100%;
+                    height: auto;
+                  }
+                  .content {
+                    padding: 20px;
+                  }
+                  .footer {
+                    text-align: center;
+                    margin-top: 20px;
+                    font-size: 14px;
+                    color: #aaa;
+                  }
+                  .content h1 {
+                    font-size: 20px;
+                    color: #333;
+                  }
+                  .content p {
+                    font-size: 16px;
+                    color: #555;
+                    line-height: 1.5;
+                  }
+                  .content strong {
+                    color: #333;
+                  }
+                  .acceptance-message {
+                    font-weight: bold;
+                    color: #5cb85c;
+                  }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+              <div class="header">
+                <img src="cid:unach-banner" alt="Universidad Autonoma de Chiapas" />
+              </div>
+              <div class="content">
+                <h1>¡Hola, ${nombre}!</h1>
+                <p>Nos complace informarte que el registro de tu tesina ha sido <span class="acceptance-message">aceptado</span>.</p>
+                <p>Gracias por tu esfuerzo y dedicación. Ahora puedes continuar con los siguientes pasos del proceso de titulación.</p>
+                <p>Atentamente,<br />Coordinación del Seminario de Titulación y Equipo Sistema de Información para la Gestión del Seminario de Titulación</p>
+              </div>
+              <div class="footer">
+                <p>Este es un mensaje automático, por favor no responder.</p>
+              </div>
+            </div>
+        </body>
+        </html>`,
+      attachments: [
+        {
+          filename: "unach-banner.jpg",
+          path: imagePath,
+          cid: "unach-banner",
+        },
+      ],
+    });
+    console.log("Mensaje enviado: %s", info.messageId);
+  } catch (error) {
+    console.error(
+      `Error al enviar el correo de aceptación de registro: ${error.message}`
+    );
+  }
+}

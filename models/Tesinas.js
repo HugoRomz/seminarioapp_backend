@@ -199,3 +199,11 @@ Tesinas.hasMany(Proyectos, {
 Proyectos.belongsTo(Tesinas, {
   foreignKey: "tesina_id",
 });
+
+CursoPeriodos.hasMany(Tesinas, {
+  foreignKey: "curso_periodo_id",
+});
+
+Tesinas.belongsTo(CursoPeriodos, {
+  foreignKey: "curso_periodo_id",
+});
