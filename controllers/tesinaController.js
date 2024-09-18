@@ -19,7 +19,8 @@ import {
 
 const createInvitation = async (req, res) => {
   try {
-    const { nombre_tesina, area_tema, resenia_tema, userId, invitado_email } = req.body;
+    const { nombre_tesina, area_tema, resenia_tema, userId, invitado_email } =
+      req.body;
 
     if (!Array.isArray(invitado_email) || invitado_email.length === 0) {
       return res
@@ -104,7 +105,7 @@ const createInvitation = async (req, res) => {
       failedInvitations,
       pendingInvitations,
       alreadyHasTesina,
-      alreadyHasTesinaName
+      alreadyHasTesinaName,
     };
 
     res.status(201).json(responseMessage);
@@ -171,6 +172,40 @@ const acceptInvitation = async (req, res) => {
       return res.status(404).json({ error: "Invitación no encontrada" });
     }
 
+    // Buscar curso_periodo_id del anfitrión
+    const anfitrion = await Usuarios.findOne({
+      where: { usuario_id: invitacion.usuario_id },
+      include: {
+        model: CursoPeriodos,
+        attributes: ["curso_periodo_id"],
+      },
+    });
+
+    if (!anfitrion || !anfitrion.cursos_periodo.curso_periodo_id) {
+      return res
+        .status(404)
+        .json({ error: "Anfitrión o curso_periodo_id no encontrado" });
+    }
+
+    const cursoPeriodoAnfitrion = anfitrion.cursos_periodo.curso_periodo_id;
+
+    // Buscar curso_periodo_id del invitado
+    const invitado = await Usuarios.findOne({
+      where: { usuario_id: invitacion.usuario_id_invitado },
+      include: {
+        model: CursoPeriodos,
+        attributes: ["curso_periodo_id"],
+      },
+    });
+
+    if (!invitado || !invitado.cursos_periodo.curso_periodo_id) {
+      return res
+        .status(404)
+        .json({ error: "Invitado o curso_periodo_id no encontrado" });
+    }
+
+    const cursoPeriodoInvitado = invitado.cursos_periodo.curso_periodo_id;
+
     invitacion.status = "ACEPTADO";
     await invitacion.save();
 
@@ -193,6 +228,7 @@ const acceptInvitation = async (req, res) => {
         fecha_registro: new Date(),
         status: "PENDIENTE",
         url_documento: null,
+        curso_periodo_id: cursoPeriodoAnfitrion,
       });
 
       const invitacionesAceptadas = await Invitaciones.findAll({
@@ -213,6 +249,7 @@ const acceptInvitation = async (req, res) => {
             fecha_registro: new Date(),
             status: "PENDIENTE",
             url_documento: null,
+            curso_periodo_id: cursoPeriodoInvitado,
           });
           return nuevaTesinaInvitado;
         }
@@ -320,17 +357,15 @@ const createTesina = async (req, res) => {
     }
 
     const responseMessage = {
-      alreadyHasTesinaName
+      alreadyHasTesinaName,
     };
 
     res.status(201).json(responseMessage);
-
   } catch (error) {
     console.error("Error al registrar la tesina:", error);
     res.status(500).json({ error: "Error al registrar la tesina" });
   }
 };
-
 
 const getTesinasByUser = async (req, res) => {
   try {
@@ -376,7 +411,7 @@ const getTesinasByUser = async (req, res) => {
           },
         ],
         where: {
-          nombre_tesina: tesina.nombre_tesina, 
+          nombre_tesina: tesina.nombre_tesina,
           usuario_id_alumno: { [Op.ne]: userId }, // Diferente alumno
         },
       });
@@ -405,8 +440,8 @@ const getAllTesinas = async (req, res) => {
         {
           model: CursoPeriodos,
           where: {
-            periodo_id: id
-          }
+            periodo_id: id,
+          },
         },
         {
           model: Usuarios,
@@ -474,7 +509,9 @@ const acceptTesinasByName = async (req, res) => {
       }
     }
 
-    res.status(200).json({ message: "Tesinas aceptadas correctamente y correos enviados" });
+    res
+      .status(200)
+      .json({ message: "Tesinas aceptadas correctamente y correos enviados" });
   } catch (error) {
     console.error("Error al aceptar las tesinas:", error);
     res.status(500).json({ error: "Error al aceptar las tesinas" });
@@ -736,7 +773,15 @@ const getDocentesConTesinasAsignadas = async (req, res) => {
       docentes.map(async (docente) => {
         const tesinas = await Tesinas.findAll({
           where: { usuario_id_docente: docente.usuario_id },
-          attributes: ["tesina_id", "nombre_tesina", "area_tesina", "resenia_tesina", "fecha_registro", "status", "url_documento"],
+          attributes: [
+            "tesina_id",
+            "nombre_tesina",
+            "area_tesina",
+            "resenia_tesina",
+            "fecha_registro",
+            "status",
+            "url_documento",
+          ],
           include: [
             {
               model: CursoPeriodos,
@@ -755,12 +800,16 @@ const getDocentesConTesinasAsignadas = async (req, res) => {
       })
     );
 
-    const docentesConTesinasAsignadas = docentesConTesinas.filter(docente => docente !== null);
+    const docentesConTesinasAsignadas = docentesConTesinas.filter(
+      (docente) => docente !== null
+    );
 
     res.status(200).json(docentesConTesinasAsignadas);
   } catch (error) {
     console.error("Error al obtener los docentes y tesinas asignadas:", error);
-    res.status(500).json({ error: "Error al obtener los docentes y tesinas asignadas" });
+    res
+      .status(500)
+      .json({ error: "Error al obtener los docentes y tesinas asignadas" });
   }
 };
 
