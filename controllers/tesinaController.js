@@ -19,8 +19,7 @@ import {
 
 const createInvitation = async (req, res) => {
   try {
-    const { nombre_tesina, area_tema, resenia_tema, userId, invitado_email } =
-      req.body;
+    const { nombre_tesina, area_tema, resenia_tema, userId, invitado_email } = req.body;
 
     if (!Array.isArray(invitado_email) || invitado_email.length === 0) {
       return res
@@ -31,51 +30,72 @@ const createInvitation = async (req, res) => {
     const failedInvitations = [];
     const successfulInvitations = [];
     const pendingInvitations = [];
+    const alreadyHasTesina = [];
+    const alreadyHasTesinaName = [];
 
-    for (const email of invitado_email) {
-      const invitado = await Usuarios.findOne({
-        where: { email_usuario: email },
-      });
+    // Verificar si ya existe una tesina con el mismo nombre
+    const existingTesinaWithName = await Tesinas.findOne({
+      where: { nombre_tesina: nombre_tesina },
+    });
 
-      if (!invitado) {
-        failedInvitations.push(email);
-        continue;
+    if (existingTesinaWithName) {
+      alreadyHasTesinaName.push(nombre_tesina);
+    } else {
+      for (const email of invitado_email) {
+        const invitado = await Usuarios.findOne({
+          where: { email_usuario: email },
+        });
+
+        if (!invitado) {
+          failedInvitations.push(email);
+          continue;
+        }
+
+        // Verificar si el usuario ya tiene una tesina registrada
+        const existingTesina = await Tesinas.findOne({
+          where: { usuario_id_alumno: invitado.usuario_id },
+        });
+
+        if (existingTesina) {
+          alreadyHasTesina.push(email);
+          continue;
+        }
+
+        const invitadoSentInvitation = await Invitaciones.findOne({
+          where: { usuario_id: invitado.usuario_id },
+        });
+        if (invitadoSentInvitation) {
+          pendingInvitations.push(email);
+          continue;
+        }
+
+        const pendingInvitation = await Invitaciones.findOne({
+          where: { usuario_id_invitado: invitado.usuario_id },
+        });
+        if (pendingInvitation) {
+          pendingInvitations.push(email);
+          continue;
+        }
+
+        const nuevaInvitacion = await Invitaciones.create({
+          nombre_tesina,
+          area_tema,
+          resenia_tema,
+          usuario_id: userId,
+          usuario_id_invitado: invitado.usuario_id,
+        });
+
+        successfulInvitations.push(nuevaInvitacion);
+
+        // Envía el correo de invitación al invitado
+        await sendEmailInvitation(
+          email,
+          req.user.nombre,
+          nombre_tesina,
+          area_tema,
+          resenia_tema
+        );
       }
-
-      const invitadoSentInvitation = await Invitaciones.findOne({
-        where: { usuario_id: invitado.usuario_id },
-      });
-      if (invitadoSentInvitation) {
-        pendingInvitations.push(email);
-        continue;
-      }
-
-      const pendingInvitation = await Invitaciones.findOne({
-        where: { usuario_id_invitado: invitado.usuario_id },
-      });
-      if (pendingInvitation) {
-        pendingInvitations.push(email);
-        continue;
-      }
-
-      const nuevaInvitacion = await Invitaciones.create({
-        nombre_tesina,
-        area_tema,
-        resenia_tema,
-        usuario_id: userId,
-        usuario_id_invitado: invitado.usuario_id,
-      });
-
-      successfulInvitations.push(nuevaInvitacion);
-
-      // Envía el correo de invitación al invitado
-      await sendEmailInvitation(
-        email,
-        req.user.nombre,
-        nombre_tesina,
-        area_tema,
-        resenia_tema
-      );
     }
 
     const responseMessage = {
@@ -83,6 +103,8 @@ const createInvitation = async (req, res) => {
       successfulInvitations,
       failedInvitations,
       pendingInvitations,
+      alreadyHasTesina,
+      alreadyHasTesinaName
     };
 
     res.status(201).json(responseMessage);
@@ -254,40 +276,55 @@ const createTesina = async (req, res) => {
   try {
     const { nombre_tesina, area_tema, resenia_tema, userId } = req.body;
 
-    // Obtener el usuario con su curso_periodo_id
-    const usuario = await Usuarios.findOne({
-      where: { usuario_id: userId },
-      include: {
-        model: CursoPeriodos,
-        attributes: ["curso_periodo_id"],
-      },
+    const alreadyHasTesinaName = [];
+
+    const existingTesina = await Tesinas.findOne({
+      where: { nombre_tesina: nombre_tesina },
     });
 
-    console.log(usuario)
+    if (existingTesina) {
+      alreadyHasTesinaName.push(nombre_tesina);
+    } else {
+      const usuario = await Usuarios.findOne({
+        where: { usuario_id: userId },
+        include: {
+          model: CursoPeriodos,
+          attributes: ["curso_periodo_id"],
+        },
+      });
 
-    if (!usuario || !usuario.curso_periodo_id) {
-      return res
-        .status(404)
-        .json({ error: "Usuario o curso_periodo_id no encontrado" });
+      if (!usuario || !usuario.curso_periodo_id) {
+        return res
+          .status(404)
+          .json({ error: "Usuario o curso_periodo_id no encontrado" });
+      }
+
+      const curso_periodo_id = usuario.curso_periodo_id;
+
+      const nuevaTesina = await Tesinas.create({
+        usuario_id_docente: null,
+        usuario_id_alumno: userId,
+        nombre_tesina: nombre_tesina,
+        area_tesina: area_tema,
+        resenia_tesina: resenia_tema,
+        fecha_registro: new Date(),
+        status: "PENDIENTE",
+        url_documento: null,
+        curso_periodo_id: curso_periodo_id,
+      });
+
+      return res.status(201).json({
+        message: "Tesina registrada con éxito.",
+        tesina: nuevaTesina,
+      });
     }
 
-    const curso_periodo_id = usuario.curso_periodo_id;
+    const responseMessage = {
+      alreadyHasTesinaName
+    };
 
-    const nuevaTesina = await Tesinas.create({
-      usuario_id_docente: null,
-      usuario_id_alumno: userId,
-      nombre_tesina: nombre_tesina,
-      area_tesina: area_tema,
-      resenia_tesina: resenia_tema,
-      fecha_registro: new Date(),
-      status: "PENDIENTE",
-      url_documento: null,
-      curso_periodo_id: curso_periodo_id, 
-    });
+    res.status(201).json(responseMessage);
 
-    res
-      .status(201)
-      .json({ message: "Tesina registrada con éxito.", tesina: nuevaTesina });
   } catch (error) {
     console.error("Error al registrar la tesina:", error);
     res.status(500).json({ error: "Error al registrar la tesina" });
